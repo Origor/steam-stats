@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   Search,
   Trophy,
@@ -24,7 +24,15 @@ import {
   ChevronUp,
   Medal
 } from 'lucide-react';
-import { MOCK_USER, MOCK_GAMES, MOCK_ACHIEVEMENTS } from './mockData';
+import {
+  useSteamData
+} from './hooks/useSteamData';
+import {
+  useSteamStats
+} from './hooks/useSteamStats';
+import {
+  useGeminiAI
+} from './hooks/useGeminiAI';
 import ActivityHeatmap from './components/charts/ActivityHeatmap';
 import CustomBarChart from './components/charts/CustomBarChart';
 import CustomDonutChart from './components/charts/CustomDonutChart';
@@ -61,195 +69,59 @@ const openSteamStore = (appid) => window.open(`https://store.steampowered.com/ap
 export default function SteamAnalyzer() {
   const [steamApiKey, setSteamApiKey] = useState('');
   const [steamId, setSteamId] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [userData, setUserData] = useState(null);
-  const [gamesData, setGamesData] = useState(null);
-  const [isDemo, setIsDemo] = useState(true);
   const [useProxy, setUseProxy] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-
   const [expandedGame, setExpandedGame] = useState(null);
-  const [achievements, setAchievements] = useState({});
-  const [loadingAchId, setLoadingAchId] = useState(null);
 
-  const [aiProfile, setAiProfile] = useState('');
-  const [aiRecommendation, setAiRecommendation] = useState('');
-  const [aiValuation, setAiValuation] = useState('');
-  const [aiLoadingType, setAiLoadingType] = useState(null);
+  // 1. Steam Data Hook
+  const {
+    loading,
+    error,
+    userData,
+    gamesData,
+    isDemo,
+    achievements,
+    loadingAchId,
+    loadDemoData,
+    fetchData,
+    fetchAchievements
+  } = useSteamData({ steamApiKey, steamId, useProxy });
 
-  useEffect(() => { loadDemoData(); }, []);
+  // 2. Steam Stats Hook
+  const {
+    stats,
+    filteredGames,
+    searchTerm,
+    setSearchTerm,
+    selectedCategory,
+    setSelectedCategory
+  } = useSteamStats(gamesData);
 
-  const loadDemoData = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setUserData(MOCK_USER);
-      setGamesData(MOCK_GAMES);
-      setLoading(false);
-      setIsDemo(true);
-      setError('');
-      setAiProfile(''); setAiRecommendation(''); setAiValuation('');
-    }, 800);
-  };
+  // 3. Gemini AI Hook
+  const {
+    aiProfile,
+    aiRecommendation,
+    aiValuation,
+    aiLoadingType,
+    generateGamerProfile,
+    suggestBacklogGame,
+    estimateAccountValue,
+    setAiProfile,
+    setAiRecommendation,
+    setAiValuation
+  } = useGeminiAI(googleApiKey);
 
-  const fetchData = async () => {
-    if (!steamApiKey || !steamId) { setError("Please provide both an API Key and Steam ID."); return; }
-    setLoading(true); setError(''); setIsDemo(false); setAiProfile(''); setAiRecommendation(''); setAiValuation(''); setAchievements({});
-
-    try {
-      const proxyUrl = useProxy ? 'https://api.allorigins.win/get?url=' : '';
-      const fetchWithProxy = async (url) => {
-        const fullUrl = proxyUrl ? `${proxyUrl}${encodeURIComponent(url)}` : url;
-        const res = await fetch(fullUrl);
-        if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
-        const json = await res.json();
-        return proxyUrl ? JSON.parse(json.contents) : json;
-      };
-
-      const userUrl = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${steamApiKey}&steamids=${steamId}`;
-      const userRes = await fetchWithProxy(userUrl);
-      const player = userRes.response?.players?.[0];
-      if (!player) throw new Error("User not found or profile is private.");
-
-      const gamesUrl = `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${steamApiKey}&steamid=${steamId}&include_appinfo=true&include_played_free_games=true`;
-      const gamesRes = await fetchWithProxy(gamesUrl);
-      const games = gamesRes.response?.games;
-      if (!games) throw new Error("Could not fetch games. Is the profile public?");
-
-      setUserData(player);
-      setGamesData(games);
-    } catch (err) {
-      console.error(err);
-      setError(`Failed to fetch data: ${err.message}.`);
-    } finally { setLoading(false); }
-  };
-
-  const fetchAchievements = async (appid) => {
-    if (achievements[appid] || isDemo) {
-      if (isDemo && !achievements[appid]) {
-        setAchievements(prev => ({ ...prev, [appid]: MOCK_ACHIEVEMENTS }));
-      }
-      return;
-    }
-    setLoadingAchId(appid);
-    try {
-      const proxyUrl = useProxy ? 'https://api.allorigins.win/get?url=' : '';
-      const url = `https://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v1/?appid=${appid}&key=${steamApiKey}&steamid=${steamId}`;
-      const fullUrl = proxyUrl ? `${proxyUrl}${encodeURIComponent(url)}` : url;
-      const res = await fetch(fullUrl);
-      if (!res.ok) throw new Error("No achievements found or private");
-      const json = await res.json();
-      const proxyJson = proxyUrl ? JSON.parse(json.contents) : json;
-      const unlocked = proxyJson.playerstats?.achievements?.filter(a => a.achieved === 1) || [];
-      setAchievements(prev => ({ ...prev, [appid]: unlocked }));
-    } catch (err) {
-      console.log("Achievement fetch failed:", err);
-      setAchievements(prev => ({ ...prev, [appid]: [] }));
-    } finally {
-      setLoadingAchId(prev => (prev === appid ? null : prev));
-    }
-  };
+  // Clear AI results when new data is fetched
+  // We can't easily do this automatically inside the hooks without cross-communication or a context, 
+  // so we'll just let the user regenerate insights if they fetch new data.
+  // Or we could add an effect here if really needed, but keeping it simple is better.
 
   const handleGameClick = (appid) => {
-    if (expandedGame === appid) { setExpandedGame(null); } else { setExpandedGame(appid); fetchAchievements(appid); }
-  };
-
-  const stats = useMemo(() => {
-    if (!gamesData) return null;
-    const totalGames = gamesData.length;
-    const totalMinutes = gamesData.reduce((acc, game) => acc + game.playtime_forever, 0);
-    const totalHours = totalMinutes / 60;
-    const unplayed = gamesData.filter(g => g.playtime_forever < 60);
-    const played = gamesData.filter(g => g.playtime_forever >= 60);
-    const shamePercentage = ((unplayed.length / totalGames) * 100).toFixed(1);
-    const sortedGames = [...gamesData].sort((a, b) => b.playtime_forever - a.playtime_forever);
-    const top5 = sortedGames.slice(0, 5).map(g => ({ label: g.name, value: Math.round(g.playtime_forever / 60) }));
-    const distData = [
-      { id: 'unplayed', label: 'Unplayed (< 1h)', value: 0, color: '#fca5a5' },
-      { id: 'casual', label: 'Casual (1-10h)', value: 0, color: '#fcd34d' },
-      { id: 'regular', label: 'Regular (10-100h)', value: 0, color: '#93c5fd' },
-      { id: 'addict', label: 'Addict (100h+)', value: 0, color: '#6ee7b7' }
-    ];
-    gamesData.forEach(g => {
-      const h = g.playtime_forever / 60;
-      if (h < 1) distData[0].value++; else if (h < 10) distData[1].value++; else if (h < 100) distData[2].value++; else distData[3].value++;
-    });
-    const activeDistData = distData.filter(d => d.value > 0);
-    return { totalGames, totalHours: Math.round(totalHours), shameCount: unplayed.length, shamePercentage, averagePlaytime: (totalHours / (played.length || 1)).toFixed(1), top5, distData: activeDistData, sortedGames, unplayedGames: unplayed };
-  }, [gamesData]);
-
-  const [selectedCategory, setSelectedCategory] = useState(null);
-
-  const filteredGames = useMemo(() => {
-    if (!gamesData) return [];
-    let result = [...gamesData]
-      .sort((a, b) => b.playtime_forever - a.playtime_forever);
-
-    if (searchTerm) {
-      result = result.filter(g => g.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    if (expandedGame === appid) {
+      setExpandedGame(null);
+    } else {
+      setExpandedGame(appid);
+      fetchAchievements(appid);
     }
-
-    if (selectedCategory) {
-      result = result.filter(g => {
-        const h = g.playtime_forever / 60;
-        if (selectedCategory === 'unplayed') return h < 1;
-        if (selectedCategory === 'casual') return h >= 1 && h < 10;
-        if (selectedCategory === 'regular') return h >= 10 && h < 100;
-        if (selectedCategory === 'addict') return h >= 100;
-        return true;
-      });
-    }
-
-    return result;
-  }, [gamesData, searchTerm, selectedCategory]);
-
-  // AI Functions (Using gemini-2.5-flash-preview-09-2025 as per instruction for text)
-  const callGemini = async (prompt) => {
-    try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${googleApiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-        }
-      );
-      if (!response.ok) throw new Error(`Gemini API Error: ${response.status}`);
-      const data = await response.json();
-      return data.candidates?.[0]?.content?.parts?.[0]?.text || "No insights generated.";
-    } catch (error) {
-      console.error("Gemini Error:", error);
-      return "Failed to contact the AI Oracle. Please try again.";
-    }
-  };
-
-  const generateGamerProfile = async () => {
-    if (!stats) return;
-    setAiLoadingType('profile');
-    const topGamesList = stats.top5.map(g => `${g.label} (${g.value}h)`).join(', ');
-    const shameStat = `${stats.shameCount} unplayed games (${stats.shamePercentage}%)`;
-    const prompt = `Analyze this Steam gamer based on their stats: Top Games: ${topGamesList}. Pile of Shame: ${shameStat}. Total Hours: ${stats.totalHours}. Task: Create a funny, witty "Gamer Archetype" title for them (e.g. "The Cozy Collector", "The Achievement Hunter") and a 2-3 sentence psychological profile of their gaming habits. Format the output with the title in bold (surrounded by double asterisks).`;
-    const result = await callGemini(prompt);
-    setAiProfile(result); setAiLoadingType(null);
-  };
-
-  const suggestBacklogGame = async () => {
-    if (!stats) return;
-    setAiLoadingType('recommendation');
-    const topGamesList = stats.top5.map(g => g.label).join(', ');
-    const unplayedSample = stats.unplayedGames.sort(() => 0.5 - Math.random()).slice(0, 20).map(g => g.name).join(', ');
-    const prompt = `This Steam user loves playing: ${topGamesList}. However, they own these games but have NEVER played them (0 hours): ${unplayedSample}. Task: Recommend exactly ONE game from the unplayed list that they should start next. Explain why they would like it based on their favorite games. Keep it short and encouraging. Use bullet points if listing reasons.`;
-    const result = await callGemini(prompt);
-    setAiRecommendation(result); setAiLoadingType(null);
-  };
-
-  const estimateAccountValue = async () => {
-    if (!stats) return;
-    setAiLoadingType('valuation');
-    const gamesList = stats.sortedGames.slice(0, 30).map(g => g.name).join(', ');
-    const prompt = `I have a list of Steam games: ${gamesList}. Task: Act as a "SteamDB Simulator". 1. Estimate the approximate total store value of these specific games in USD (current full price, not sale price). 2. Give an estimated average "Metacritic" or "Steam Review" score for this collection (e.g., 85/100). 3. Provide a brief 1-sentence financial summary. Format the output with bold headings (double asterisks) for each section.`;
-    const result = await callGemini(prompt);
-    setAiValuation(result); setAiLoadingType(null);
   };
 
   return (
@@ -316,9 +188,9 @@ export default function SteamAnalyzer() {
 
             {/* AI Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <AICard title="Gamer Profiler" icon={Brain} result={aiProfile} loading={aiLoadingType === 'profile'} onClick={generateGamerProfile} buttonText="Analyze Personality ✨" />
-              <AICard title="Account Appraiser" icon={Calculator} result={aiValuation} loading={aiLoadingType === 'valuation'} onClick={estimateAccountValue} buttonText="Estimate Value (AI) 💰" />
-              <AICard title="Backlog Recommender" icon={MessageSquare} result={aiRecommendation} loading={aiLoadingType === 'recommendation'} onClick={suggestBacklogGame} buttonText="Suggest Next Game ✨" />
+              <AICard title="Gamer Profiler" icon={Brain} result={aiProfile} loading={aiLoadingType === 'profile'} onClick={() => generateGamerProfile(stats)} buttonText="Analyze Personality ✨" />
+              <AICard title="Account Appraiser" icon={Calculator} result={aiValuation} loading={aiLoadingType === 'valuation'} onClick={() => estimateAccountValue(stats)} buttonText="Estimate Value (AI) 💰" />
+              <AICard title="Backlog Recommender" icon={MessageSquare} result={aiRecommendation} loading={aiLoadingType === 'recommendation'} onClick={() => suggestBacklogGame(stats)} buttonText="Suggest Next Game ✨" />
             </div>
 
             {/* Stats Grid */}
