@@ -215,13 +215,18 @@ const CustomDonutChart = ({ data }) => {
   let currentAngle = 0;
   const total = data.reduce((acc, curr) => acc + curr.value, 0);
 
+  // Offset to start at top (12 o'clock)
+  // Standard SVG starts at 3 o'clock (0 rads). 
+  // We offset by -90deg (1/4 circumference) to move start to top.
+  const initialOffset = circumference / 4;
+
   return (
     <div className="flex items-center justify-center gap-8">
       <div className="relative w-48 h-48">
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="rotate-[-90deg]">
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
           {data.map((item, idx) => {
             const strokeDasharray = `${(item.value / total) * circumference} ${circumference}`;
-            const strokeDashoffset = -currentAngle;
+            const strokeDashoffset = -currentAngle + initialOffset;
             currentAngle += (item.value / total) * circumference;
             return (
               <circle
@@ -234,6 +239,7 @@ const CustomDonutChart = ({ data }) => {
                 strokeWidth={strokeWidth}
                 strokeDasharray={strokeDasharray}
                 strokeDashoffset={strokeDashoffset}
+                strokeLinecap="round"
                 className="transition-all duration-1000 hover:opacity-80"
               />
             );
@@ -744,9 +750,10 @@ export default function SteamAnalyzer() {
               </div>
 
               {filteredGames.length > 0 ? (
-                <div className="flex flex-col gap-3">
+                // Flush list container: No Gap, Rounded Top/Bottom, Shadow
+                <div className="flex flex-col rounded-2xl shadow-sm border border-slate-100 bg-white isolate">
                     {/* Header Row for large screens */}
-                    <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 border-b border-slate-100 bg-slate-50/50 rounded-t-2xl text-xs font-bold text-slate-400 uppercase tracking-wider">
                         <div className="col-span-6">Game Name</div>
                         <div className="col-span-2 text-right">Hours</div>
                         <div className="col-span-2 text-center">Status</div>
@@ -756,28 +763,39 @@ export default function SteamAnalyzer() {
                     {filteredGames.map((game) => (
                         <div 
                             key={game.appid} 
-                            className="group relative w-full h-24 md:h-20 bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:scale-[1.02] hover:z-10 transition-all duration-300 border border-slate-100 cursor-default"
+                            // FLUSH ITEM STYLING:
+                            // - border-b border-slate-100 (separator)
+                            // - last:border-0 (no separator on last item)
+                            // - first:rounded-t (if no header row, but we have one, so we round bottom only)
+                            // - last:rounded-b-2xl
+                            // - hover:z-20 (pop over neighbors)
+                            // - hover:scale-[1.03] (pop out)
+                            // - hover:rounded-xl (restore rounded corners when popped out)
+                            className="group relative w-full h-24 md:h-20 bg-white 
+                                       border-b border-slate-100 last:border-b-0 last:rounded-b-2xl
+                                       hover:z-20 hover:scale-[1.03] hover:shadow-2xl hover:rounded-xl hover:border-transparent
+                                       transition-all duration-300 ease-out origin-center cursor-default"
                         >
                             {/* Background Banner Image */}
-                            <div className="absolute inset-0 z-0 bg-slate-100">
+                            <div className="absolute inset-0 z-0 bg-white rounded-inherit overflow-hidden">
                                 <img 
                                     src={`https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${game.appid}/header.jpg`}
                                     alt="" 
-                                    className="w-full h-full object-cover opacity-20 group-hover:opacity-100 transition-opacity duration-500 ease-in-out"
+                                    className="w-full h-full object-cover opacity-10 group-hover:opacity-100 transition-opacity duration-300 ease-in-out"
                                     onError={(e) => {
                                         // Fallback if image fails
                                         e.target.style.display = 'none';
                                     }}
                                 />
                                 {/* Gradient Overlay for text readability */}
-                                <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent group-hover:via-white/90 group-hover:to-white/40 transition-all duration-300"></div>
+                                <div className="absolute inset-0 bg-gradient-to-r from-white via-white/90 to-white/40 group-hover:via-white/95 group-hover:to-white/60 transition-all duration-300"></div>
                             </div>
 
                             {/* Card Content */}
                             <div className="relative z-10 h-full flex items-center justify-between px-6">
                                 {/* Game Title & Icon */}
                                 <div className="flex items-center gap-4 flex-1 min-w-0">
-                                    <div className="w-10 h-10 rounded-lg bg-white/80 backdrop-blur-sm shadow-sm flex items-center justify-center shrink-0 border border-slate-100">
+                                    <div className="w-10 h-10 rounded-lg bg-white/80 backdrop-blur-sm shadow-sm flex items-center justify-center shrink-0 border border-slate-100 group-hover:border-slate-200 transition-colors">
                                         {game.img_icon_url ? (
                                             <img 
                                                 src={`http://media.steampowered.com/steamcommunity/public/images/apps/${game.appid}/${game.img_icon_url}.jpg`} 
@@ -796,18 +814,18 @@ export default function SteamAnalyzer() {
                                 {/* Stats & Badges (Hidden on very small screens) */}
                                 <div className="flex items-center gap-2 md:gap-12 shrink-0">
                                     <div className="w-24 text-right hidden md:block">
-                                        <div className="font-mono font-bold text-slate-700 text-sm">
+                                        <div className="font-mono font-bold text-slate-700 text-sm group-hover:text-slate-900">
                                             {game.playtime_forever > 0 ? formatHours(game.playtime_forever) : '0.0'}h
                                         </div>
                                     </div>
 
                                     <div className="w-24 flex justify-center">
                                         {game.playtime_forever === 0 ? (
-                                            <span className="px-3 py-1 rounded-full bg-rose-100/80 backdrop-blur-sm text-rose-600 text-xs font-bold border border-rose-200">Unplayed</span>
+                                            <span className="px-3 py-1 rounded-full bg-rose-50 text-rose-600 text-xs font-bold border border-rose-100 group-hover:bg-rose-100 group-hover:border-rose-200 transition-colors">Unplayed</span>
                                         ) : game.playtime_forever > 6000 ? (
-                                            <span className="px-3 py-1 rounded-full bg-emerald-100/80 backdrop-blur-sm text-emerald-600 text-xs font-bold border border-emerald-200">Favorite</span>
+                                            <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-bold border border-emerald-100 group-hover:bg-emerald-100 group-hover:border-emerald-200 transition-colors">Favorite</span>
                                         ) : (
-                                            <span className="px-3 py-1 rounded-full bg-slate-100/80 backdrop-blur-sm text-slate-500 text-xs font-bold border border-slate-200">Played</span>
+                                            <span className="px-3 py-1 rounded-full bg-slate-50 text-slate-500 text-xs font-bold border border-slate-100 group-hover:bg-slate-100 group-hover:border-slate-200 transition-colors">Played</span>
                                         )}
                                     </div>
 
@@ -833,7 +851,7 @@ export default function SteamAnalyzer() {
                     ))}
                 </div>
               ) : (
-                <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-200">
+                <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-200 shadow-sm">
                     <p className="text-slate-400 italic">No games found matching "{searchTerm}"</p>
                 </div>
               )}
