@@ -1,0 +1,23 @@
+[Unit]
+Description=Steam Analyzer Backend
+After=network.target
+
+[Service]
+# Replace 'youruser' and paths with actual values
+User=youruser
+Group=youruser
+WorkingDirectory=/path/to/steam-stats/steam-analyzer/backend
+ExecStart=/path/to/steam-stats/steam-analyzer/backend/target/release/backend
+
+# Environment Variables
+Environment="PORT=3000"
+Environment="HOST=127.0.0.1"
+Environment="DATABASE_URL=sqlite://steam_stats.db"
+# Environment="STEAM_API_KEY=your_production_key_here" 
+
+# Restart Policy
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
