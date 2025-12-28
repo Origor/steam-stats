@@ -28,10 +28,10 @@ import {
 // --- GEMINI API CONFIGURATION ---
 
 // 🔴 OPTION 1: FOR PREVIEW (Active)
-const googleApiKey = "";
+// const googleApiKey = "";
 
 // 🟢 OPTION 2: FOR PRODUCTION / LOCAL (Commented Out)
-// const googleApiKey = import.meta.env.VITE_GOOGLE_API_KEY || "";
+const googleApiKey = import.meta.env.VITE_GOOGLE_API_KEY || "";
 
 
 // --- MOCK DATA ---
