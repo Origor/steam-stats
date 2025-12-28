@@ -30,3 +30,16 @@ export const getPlayerAchievements = async (apiKey, steamId, appid, useProxy = t
     const url = `${STEAM_BASE}/ISteamUserStats/GetPlayerAchievements/v1/?appid=${appid}&key=${apiKey}&steamid=${steamId}`;
     return fetchWithProxy(url, useProxy);
 };
+
+const BACKEND_URL = 'http://localhost:3000/api/steam';
+
+export const getBackendSteamData = async (steamId) => {
+    try {
+        const res = await fetch(`${BACKEND_URL}/user/${steamId}`);
+        if (!res.ok) throw new Error(`Backend Error: ${res.status}`);
+        return await res.json();
+    } catch (error) {
+        console.error("Backend Fetch Error:", error);
+        throw error;
+    }
+};

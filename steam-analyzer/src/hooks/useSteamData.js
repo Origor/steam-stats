@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { MOCK_USER, MOCK_GAMES, MOCK_ACHIEVEMENTS } from '../mockData';
-import { getPlayerSummaries, getOwnedGames, getPlayerAchievements } from '../services/steamApi';
+import { getPlayerSummaries, getOwnedGames, getPlayerAchievements, getBackendSteamData } from '../services/steamApi';
 
 export function useSteamData({ steamApiKey, steamId, useProxy }) {
     const [loading, setLoading] = useState(false);
@@ -36,10 +36,8 @@ export function useSteamData({ steamApiKey, steamId, useProxy }) {
         // Use provided key, or fallback to dev env var if in dev mode
         const effectiveKey = steamApiKey || (import.meta.env.DEV ? import.meta.env.VITE_DEV_STEAM_API_KEY : '');
 
-        if (!effectiveKey) {
-            setError("Please provide an API Key.");
-            return;
-        }
+        // Note: Backend handles API key for player/games data, but we might still need key for achievements
+        // if generic 'fetchAchievements' still runs client-side.
 
         if (!steamId) {
             setError("Please provide a Steam ID.");
@@ -52,19 +50,21 @@ export function useSteamData({ steamApiKey, steamId, useProxy }) {
         setAchievements({});
 
         try {
-            const userRes = await getPlayerSummaries(effectiveKey, steamId, useProxy);
-            const player = userRes.response?.players?.[0];
-            if (!player) throw new Error("User not found or profile is private.");
+            // Use Backend
+            const backendData = await getBackendSteamData(steamId);
 
-            const gamesRes = await getOwnedGames(effectiveKey, steamId, useProxy);
-            const games = gamesRes.response?.games;
-            if (!games) throw new Error("Could not fetch games. Is the profile public?");
+            const player = backendData.player_summary?.response?.players?.[0];
+            if (!player) throw new Error("User not found or profile is private (Backend).");
+
+            const games = backendData.owned_games?.response?.games;
+            // Games might be empty/null if private, but backend should return structure
 
             setUserData(player);
-            setGamesData(games);
+            setGamesData(games || []); // Backend returns structure, games list might be missing
+
         } catch (err) {
             console.error(err);
-            setError(`Failed to fetch data: ${err.message}.`);
+            setError(`Failed to fetch data from backend: ${err.message}.`);
         } finally {
             setLoading(false);
         }
