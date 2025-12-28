@@ -216,8 +216,6 @@ const CustomDonutChart = ({ data }) => {
   const total = data.reduce((acc, curr) => acc + curr.value, 0);
 
   // Offset to start at top (12 o'clock)
-  // Standard SVG starts at 3 o'clock (0 rads). 
-  // We offset by -90deg (1/4 circumference) to move start to top.
   const initialOffset = circumference / 4;
 
   return (
@@ -779,16 +777,19 @@ export default function SteamAnalyzer() {
                             {/* Background Banner Image */}
                             <div className="absolute inset-0 z-0 bg-white rounded-inherit overflow-hidden">
                                 <img 
-                                    src={`https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${game.appid}/header.jpg`}
+                                    src={`https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${game.appid}/library_hero.jpg`}
                                     alt="" 
                                     className="w-full h-full object-cover opacity-10 group-hover:opacity-100 transition-opacity duration-300 ease-in-out"
                                     onError={(e) => {
-                                        // Fallback if image fails
-                                        e.target.style.display = 'none';
+                                        // Fallback if library_hero fails
+                                        e.currentTarget.src = `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${game.appid}/header.jpg`;
+                                        e.currentTarget.onerror = null; // Prevent infinite loop
                                     }}
                                 />
                                 {/* Gradient Overlay for text readability */}
-                                <div className="absolute inset-0 bg-gradient-to-r from-white via-white/90 to-white/40 group-hover:via-white/95 group-hover:to-white/60 transition-all duration-300"></div>
+                                {/* Default: Strong white overlay (via-white/90) */}
+                                {/* Hover: Weak transparent overlay on right (via-white/30) to show image, keeps text readable on left */}
+                                <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent group-hover:from-white/90 group-hover:via-white/30 group-hover:to-transparent transition-all duration-300"></div>
                             </div>
 
                             {/* Card Content */}
