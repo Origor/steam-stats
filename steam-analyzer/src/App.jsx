@@ -336,6 +336,23 @@ const CustomDonutChart = ({ data, onCategorySelect, selectedCategory }) => {
   );
 };
 
+const GameBannerImage = ({ appid, className }) => {
+  const [imageSrc, setImageSrc] = useState(`https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${appid}/library_hero.jpg`);
+
+  return (
+    <img
+      src={imageSrc}
+      alt=""
+      className={className}
+      onError={() => {
+        if (imageSrc.includes('library_hero.jpg')) {
+          setImageSrc(`https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${appid}/header.jpg`);
+        }
+      }}
+    />
+  );
+};
+
 // --- MAIN APP ---
 
 export default function SteamAnalyzer() {
@@ -651,11 +668,9 @@ export default function SteamAnalyzer() {
                           style={{ borderRadius: isExpanded ? '1rem 1rem 0 0' : 'inherit' }}
                         >
                           <div className="absolute inset-0 z-0 bg-white">
-                            <img
-                              src={`https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${game.appid}/library_hero.jpg`}
-                              alt=""
+                            <GameBannerImage
+                              appid={game.appid}
                               className="w-full h-full object-cover opacity-10 group-hover:opacity-100 transition-opacity duration-300 ease-in-out"
-                              onError={(e) => { e.currentTarget.src = `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${game.appid}/header.jpg`; e.currentTarget.onerror = null; }}
                             />
                             <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent group-hover:from-white/90 group-hover:via-white/30 group-hover:to-transparent transition-all duration-300"></div>
                           </div>
