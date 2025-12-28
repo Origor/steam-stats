@@ -33,6 +33,8 @@ import {
 import {
   useGeminiAI
 } from './hooks/useGeminiAI';
+import { formatHours, formatNumber, formatDate } from './utils/formatters';
+import { openSteamDB, openSteamStore } from './utils/links';
 import ActivityHeatmap from './components/charts/ActivityHeatmap';
 import CustomBarChart from './components/charts/CustomBarChart';
 import CustomDonutChart from './components/charts/CustomDonutChart';
@@ -49,20 +51,7 @@ const googleApiKey = import.meta.env.DEV
 
 // --- MOCK DATA REMOVED (Imported from ./mockData.js) ---
 
-// --- UTILITY FUNCTIONS ---
-const formatHours = (minutes) => (minutes / 60).toFixed(1);
-const formatNumber = (num) => new Intl.NumberFormat().format(num);
-const formatDate = (timestamp) => {
-  if (!timestamp) return 'Never';
-  return new Date(timestamp * 1000).toLocaleDateString('en-US', {
-    year: 'numeric', month: 'short', day: 'numeric'
-  });
-};
-
-const openSteamDB = (appid) => window.open(`https://steamdb.info/app/${appid}/`, '_blank', 'noopener,noreferrer');
-const openSteamStore = (appid) => window.open(`https://store.steampowered.com/app/${appid}/`, '_blank', 'noopener,noreferrer');
-
-// --- COMPONENTS --- (Moved to src/components/)
+// --- UTILITY FUNCTIONS --- (Moved to src/utils/)
 
 // --- MAIN APP ---
 

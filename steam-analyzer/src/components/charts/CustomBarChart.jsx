@@ -1,6 +1,5 @@
 import React from 'react';
-
-const formatNumber = (num) => new Intl.NumberFormat().format(num);
+import { formatNumber } from '../../utils/formatters';
 
 const CustomBarChart = ({ data }) => {
     const maxVal = Math.max(...data.map(d => d.value));
