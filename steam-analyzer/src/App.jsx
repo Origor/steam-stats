@@ -822,25 +822,25 @@ export default function SteamAnalyzer() {
 
                                     <div className="w-24 flex justify-center">
                                         {game.playtime_forever === 0 ? (
-                                            <span className="px-3 py-1 rounded-full bg-rose-50 text-rose-600 text-xs font-bold border border-rose-100 group-hover:bg-rose-100 group-hover:border-rose-200 transition-colors">Unplayed</span>
+                                            <span className="px-3 py-1 rounded-full bg-rose-100 text-rose-700 text-xs font-bold border border-rose-200 shadow-sm">Unplayed</span>
                                         ) : game.playtime_forever > 6000 ? (
-                                            <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-bold border border-emerald-100 group-hover:bg-emerald-100 group-hover:border-emerald-200 transition-colors">Favorite</span>
+                                            <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-200 shadow-sm">Favorite</span>
                                         ) : (
-                                            <span className="px-3 py-1 rounded-full bg-slate-50 text-slate-500 text-xs font-bold border border-slate-100 group-hover:bg-slate-100 group-hover:border-slate-200 transition-colors">Played</span>
+                                            <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold border border-indigo-200 shadow-sm">Played</span>
                                         )}
                                     </div>
 
                                     <div className="w-20 flex justify-end gap-2">
                                         <button 
                                             onClick={() => openSteamStore(game.appid)}
-                                            className="p-2 rounded-lg bg-white/50 hover:bg-indigo-500 hover:text-white text-slate-400 transition-all shadow-sm"
+                                            className="p-2 rounded-lg bg-white hover:bg-indigo-500 hover:text-white text-slate-400 border border-slate-200 hover:border-indigo-500 transition-all shadow-sm"
                                             title="Steam Store"
                                         >
                                             <Gamepad2 className="w-4 h-4" />
                                         </button>
                                         <button 
                                             onClick={() => openSteamDB(game.appid)}
-                                            className="p-2 rounded-lg bg-white/50 hover:bg-blue-500 hover:text-white text-slate-400 transition-all shadow-sm"
+                                            className="p-2 rounded-lg bg-white hover:bg-[#1b2838] hover:text-[#3899e8] text-slate-400 border border-slate-200 hover:border-[#1b2838] transition-all shadow-sm"
                                             title="SteamDB"
                                         >
                                             <Database className="w-4 h-4" />
