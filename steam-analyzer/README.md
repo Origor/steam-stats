@@ -1,16 +1,107 @@
-# React + Vite
+# Steam Analyzer 🎮
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Steam Analyzer** (also known as *Steam Insight*) is a modern, data-driven dashboard that analyzes your Steam profile to provide deep insights into your gaming habits. It combines real-time data from the Steam API with AI-powered analysis to give you a fresh perspective on your library.
 
-Currently, two official plugins are available:
+## ✨ Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Profile Statistics**:
+  - **Pile of Shame**: Calculate the percentage of unplayed games in your library.
+  - **Playtime Analysis**: Total hours played, average session length, and library value.
+  - **Visual Charts**: Interactive bar charts for top games and donut charts for library distribution.
 
-## React Compiler
+- **🤖 AI-Powered Insights (Gemini)**:
+  - **Gamer Profiler**: Analyzes your playstyle to generate a unique "Gamer Personality".
+  - **Account Appraiser**: Estimates the "emotional and effort value" of your account.
+  - **Backlog Recommender**: Smart suggestions on what to play next based on your history.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Detailed Game Views**:
+  - **Activity Heatmap**: Visualize your achievement unlock history.
+  - **Achievement Vault**: Browse detailed lists of unlocked trophies.
+  - **Deep Links**: Quick access to SteamDB and the Steam Store for every game.
 
-## Expanding the ESLint configuration
+- **Tech**:
+  - **Demo Mode**: Explore the app features with sample data without logging in.
+  - **CORS Proxy Support**: Option to use a proxy for client-side API calls.
+  - **Responsive Design**: Built with a mobile-first approach using Tailwind CSS.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🛠️ Technology Stack
+
+### Frontend
+- **Framework**: [React](https://react.dev/) + [Vite](https://vitejs.dev/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Charts**: Custom SVG implementations
+
+### Backend
+- **Language**: [Rust](https://www.rust-lang.org/)
+- **Web Framework**: [Axum](https://github.com/tokio-rs/axum)
+- **Database**: [SQLite](https://sqlite.org/) (via [SQLx](https://github.com/launchbadge/sqlx))
+- **Runtime**: [Tokio](https://tokio.rs/)
+
+## 🚀 Getting Started
+
+### Prerequisites
+- **Node.js**: v18+
+- **Rust**: Latest stable toolchain (`rustup`)
+- **API Keys**:
+  - [Steam Web API Key](https://steamcommunity.com/dev/apikey)
+  - [Google Gemini API Key](https://aistudio.google.com/app/apikey)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/steam-analyzer.git
+   cd steam-analyzer
+   ```
+
+2. **Setup Frontend**
+   ```bash
+   npm install
+   ```
+
+3. **Setup Backend**
+   ```bash
+   cd backend
+   # Create a .env file for the backend
+   echo "DATABASE_URL=sqlite:steam_stats.db" > .env
+   echo "STEAM_API_KEY=your_steam_api_key_here" >> .env
+   
+   # Initialize the database (if using sqlx-cli, or let the app handle it)
+   # cargo sqlx database create
+   cd ..
+   ```
+
+### Configuration
+
+Create a `.env` file in the **root** directory (for Frontend):
+```env
+VITE_GOOGLE_API_KEY=your_gemini_api_key_here
+```
+
+Create a `.env` file in the **backend** directory:
+```env
+DATABASE_URL=sqlite:steam.db
+STEAM_API_KEY=your_steam_api_key_here
+HOST=127.0.0.1
+PORT=3000
+```
+
+## 🏃‍♂️ Usage
+
+### Running the Project
+
+You can run both the frontend and backend concurrently for the full experience.
+
+**Terminal 1: Frontend**
+```bash
+npm run dev
+```
+The app will be available at `http://localhost:5173`.
+
+**Terminal 2: Backend**
+```bash
+cd backend
+cargo run
+```
+The server will start on `http://localhost:3000`.
