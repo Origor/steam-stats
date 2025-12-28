@@ -28,21 +28,35 @@ export function useSteamData({ steamApiKey, steamId, useProxy }) {
     };
 
     const fetchData = async () => {
-        if (!steamApiKey || !steamId) {
+        if (!steamApiKey && !steamId) {
             setError("Please provide both an API Key and Steam ID.");
             return;
         }
+
+        // Use provided key, or fallback to dev env var if in dev mode
+        const effectiveKey = steamApiKey || (import.meta.env.DEV ? import.meta.env.VITE_DEV_STEAM_API_KEY : '');
+
+        if (!effectiveKey) {
+            setError("Please provide an API Key.");
+            return;
+        }
+
+        if (!steamId) {
+            setError("Please provide a Steam ID.");
+            return;
+        }
+
         setLoading(true);
         setError('');
         setIsDemo(false);
         setAchievements({});
 
         try {
-            const userRes = await getPlayerSummaries(steamApiKey, steamId, useProxy);
+            const userRes = await getPlayerSummaries(effectiveKey, steamId, useProxy);
             const player = userRes.response?.players?.[0];
             if (!player) throw new Error("User not found or profile is private.");
 
-            const gamesRes = await getOwnedGames(steamApiKey, steamId, useProxy);
+            const gamesRes = await getOwnedGames(effectiveKey, steamId, useProxy);
             const games = gamesRes.response?.games;
             if (!games) throw new Error("Could not fetch games. Is the profile public?");
 
@@ -65,7 +79,9 @@ export function useSteamData({ steamApiKey, steamId, useProxy }) {
         }
         setLoadingAchId(appid);
         try {
-            const json = await getPlayerAchievements(steamApiKey, steamId, appid, useProxy);
+            const effectiveKey = steamApiKey || (import.meta.env.DEV ? import.meta.env.VITE_DEV_STEAM_API_KEY : '');
+            if (!effectiveKey) throw new Error("No API Key available");
+            const json = await getPlayerAchievements(effectiveKey, steamId, appid, useProxy);
             const unlocked = json.playerstats?.achievements?.filter(a => a.achieved === 1) || [];
             setAchievements(prev => ({ ...prev, [appid]: unlocked }));
         } catch (err) {
