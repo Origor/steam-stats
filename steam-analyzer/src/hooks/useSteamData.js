@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { MOCK_USER, MOCK_GAMES, MOCK_ACHIEVEMENTS } from '../mockData';
+import { getPlayerSummaries, getOwnedGames, getPlayerAchievements } from '../services/steamApi';
 
 export function useSteamData({ steamApiKey, steamId, useProxy }) {
     const [loading, setLoading] = useState(false);
@@ -37,22 +38,11 @@ export function useSteamData({ steamApiKey, steamId, useProxy }) {
         setAchievements({});
 
         try {
-            const proxyUrl = useProxy ? 'https://api.allorigins.win/get?url=' : '';
-            const fetchWithProxy = async (url) => {
-                const fullUrl = proxyUrl ? `${proxyUrl}${encodeURIComponent(url)}` : url;
-                const res = await fetch(fullUrl);
-                if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
-                const json = await res.json();
-                return proxyUrl ? JSON.parse(json.contents) : json;
-            };
-
-            const userUrl = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${steamApiKey}&steamids=${steamId}`;
-            const userRes = await fetchWithProxy(userUrl);
+            const userRes = await getPlayerSummaries(steamApiKey, steamId, useProxy);
             const player = userRes.response?.players?.[0];
             if (!player) throw new Error("User not found or profile is private.");
 
-            const gamesUrl = `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${steamApiKey}&steamid=${steamId}&include_appinfo=true&include_played_free_games=true`;
-            const gamesRes = await fetchWithProxy(gamesUrl);
+            const gamesRes = await getOwnedGames(steamApiKey, steamId, useProxy);
             const games = gamesRes.response?.games;
             if (!games) throw new Error("Could not fetch games. Is the profile public?");
 
@@ -75,14 +65,8 @@ export function useSteamData({ steamApiKey, steamId, useProxy }) {
         }
         setLoadingAchId(appid);
         try {
-            const proxyUrl = useProxy ? 'https://api.allorigins.win/get?url=' : '';
-            const url = `https://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v1/?appid=${appid}&key=${steamApiKey}&steamid=${steamId}`;
-            const fullUrl = proxyUrl ? `${proxyUrl}${encodeURIComponent(url)}` : url;
-            const res = await fetch(fullUrl);
-            if (!res.ok) throw new Error("No achievements found or private");
-            const json = await res.json();
-            const proxyJson = proxyUrl ? JSON.parse(json.contents) : json;
-            const unlocked = proxyJson.playerstats?.achievements?.filter(a => a.achieved === 1) || [];
+            const json = await getPlayerAchievements(steamApiKey, steamId, appid, useProxy);
+            const unlocked = json.playerstats?.achievements?.filter(a => a.achieved === 1) || [];
             setAchievements(prev => ({ ...prev, [appid]: unlocked }));
         } catch (err) {
             console.log("Achievement fetch failed:", err);
