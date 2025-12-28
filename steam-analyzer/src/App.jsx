@@ -16,13 +16,22 @@ import {
   MessageSquare,
   Loader2,
   Database,
-  Calculator
+  Calculator,
+  ImageIcon
 } from 'lucide-react';
 
-// --- GEMINI API SETUP ---
-// Access the API key from the .env file using Vite's specific env object
-const googleApiKey = import.meta.env.VITE_GOOGLE_API_KEY || ""; 
-// const googleApiKey = "";
+// --- GEMINI API CONFIGURATION ---
+
+// 🔴 OPTION 1: FOR PREVIEW (Active)
+// Use this line if you want to test in the browser right now.
+// Paste your key inside the quotes.
+const googleApiKey = ""; 
+
+// 🟢 OPTION 2: FOR PRODUCTION / LOCAL (Commented Out)
+// Use this line when you run it on your computer (npm run dev) or deploy to Vercel.
+// It will look for the VITE_GOOGLE_API_KEY in your .env file.
+// const googleApiKey = import.meta.env.VITE_GOOGLE_API_KEY || "";
+
 
 // --- MOCK DATA FOR DEMO MODE ---
 const MOCK_USER = {
@@ -718,10 +727,10 @@ export default function SteamAnalyzer() {
               </div>
             </div>
 
-            {/* Detailed Game Table */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50">
-                <h3 className="text-lg font-bold text-slate-800">Full Library</h3>
+            {/* Detailed Game Library (CARD VIEW) */}
+            <div className="bg-transparent space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <h3 className="text-xl font-bold text-slate-800 pl-1">Full Library</h3>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input 
@@ -729,79 +738,105 @@ export default function SteamAnalyzer() {
                     placeholder="Search games..." 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="bg-white border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-sm text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 w-full sm:w-64 outline-none transition-all"
+                    className="bg-white border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-sm text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 w-full sm:w-64 outline-none transition-all shadow-sm"
                   />
                 </div>
               </div>
-              
-              <div className="overflow-x-auto max-h-[600px] overflow-y-auto custom-scrollbar">
-                <table className="w-full text-left border-collapse">
-                  <thead className="bg-slate-50 text-slate-500 text-xs uppercase sticky top-0 font-bold tracking-wider">
-                    <tr>
-                      <th className="p-4">Game</th>
-                      <th className="p-4 text-right">Total Hours</th>
-                      <th className="p-4 text-right hidden sm:table-cell">Playtime (Min)</th>
-                      <th className="p-4 text-center">Status</th>
-                      <th className="p-4 text-center">Links</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {filteredGames.length > 0 ? (
-                      filteredGames.map((game) => (
-                        <tr key={game.appid} className="hover:bg-indigo-50/30 transition-colors group">
-                          <td className="p-4 flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-slate-200 flex-shrink-0 overflow-hidden shadow-sm">
-                                {game.img_icon_url ? (
-                                    <img src={`http://media.steampowered.com/steamcommunity/public/images/apps/${game.appid}/${game.img_icon_url}.jpg`} alt="" className="w-full h-full object-cover" />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">?</div>
-                                )}
+
+              {filteredGames.length > 0 ? (
+                <div className="flex flex-col gap-3">
+                    {/* Header Row for large screens */}
+                    <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                        <div className="col-span-6">Game Name</div>
+                        <div className="col-span-2 text-right">Hours</div>
+                        <div className="col-span-2 text-center">Status</div>
+                        <div className="col-span-2 text-center">Actions</div>
+                    </div>
+
+                    {filteredGames.map((game) => (
+                        <div 
+                            key={game.appid} 
+                            className="group relative w-full h-24 md:h-20 bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:scale-[1.02] hover:z-10 transition-all duration-300 border border-slate-100 cursor-default"
+                        >
+                            {/* Background Banner Image */}
+                            <div className="absolute inset-0 z-0 bg-slate-100">
+                                <img 
+                                    src={`https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${game.appid}/header.jpg`}
+                                    alt="" 
+                                    className="w-full h-full object-cover opacity-20 group-hover:opacity-100 transition-opacity duration-500 ease-in-out"
+                                    onError={(e) => {
+                                        // Fallback if image fails
+                                        e.target.style.display = 'none';
+                                    }}
+                                />
+                                {/* Gradient Overlay for text readability */}
+                                <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent group-hover:via-white/90 group-hover:to-white/40 transition-all duration-300"></div>
                             </div>
-                            <span className="font-semibold text-slate-700 group-hover:text-indigo-600 transition-colors truncate max-w-[150px] sm:max-w-xs">{game.name}</span>
-                          </td>
-                          <td className="p-4 text-right font-mono text-slate-600 font-medium">
-                            {game.playtime_forever > 0 ? formatHours(game.playtime_forever) : '-'}
-                          </td>
-                          <td className="p-4 text-right text-slate-400 text-sm hidden sm:table-cell">
-                            {formatNumber(game.playtime_forever)}
-                          </td>
-                          <td className="p-4 text-center">
-                            {game.playtime_forever === 0 ? (
-                              <span className="inline-block px-2.5 py-1 rounded-full bg-rose-100 text-rose-600 text-xs font-bold">Unplayed</span>
-                            ) : game.playtime_forever > 6000 ? (
-                              <span className="inline-block px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-600 text-xs font-bold">Favorite</span>
-                            ) : (
-                                <span className="inline-block px-2.5 py-1 rounded-full bg-slate-100 text-slate-500 text-xs font-bold">Played</span>
-                            )}
-                          </td>
-                          <td className="p-4 flex items-center justify-center gap-2">
-                             <button 
-                                onClick={() => openSteamStore(game.appid)}
-                                className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-indigo-500 transition-colors"
-                                title="View on Steam Store"
-                             >
-                               <Gamepad2 className="w-4 h-4" />
-                             </button>
-                             <button 
-                                onClick={() => openSteamDB(game.appid)}
-                                className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-blue-500 transition-colors"
-                                title="View on SteamDB"
-                             >
-                               <Database className="w-4 h-4" />
-                             </button>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="5" className="p-8 text-center text-slate-400 italic">
-                          No games found matching "{searchTerm}"
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+
+                            {/* Card Content */}
+                            <div className="relative z-10 h-full flex items-center justify-between px-6">
+                                {/* Game Title & Icon */}
+                                <div className="flex items-center gap-4 flex-1 min-w-0">
+                                    <div className="w-10 h-10 rounded-lg bg-white/80 backdrop-blur-sm shadow-sm flex items-center justify-center shrink-0 border border-slate-100">
+                                        {game.img_icon_url ? (
+                                            <img 
+                                                src={`http://media.steampowered.com/steamcommunity/public/images/apps/${game.appid}/${game.img_icon_url}.jpg`} 
+                                                alt="" 
+                                                className="w-full h-full object-cover rounded-lg"
+                                            />
+                                        ) : (
+                                            <ImageIcon className="w-5 h-5 text-slate-300" />
+                                        )}
+                                    </div>
+                                    <span className="font-bold text-slate-800 text-base md:text-lg truncate drop-shadow-sm group-hover:text-indigo-900 transition-colors">
+                                        {game.name}
+                                    </span>
+                                </div>
+
+                                {/* Stats & Badges (Hidden on very small screens) */}
+                                <div className="flex items-center gap-2 md:gap-12 shrink-0">
+                                    <div className="w-24 text-right hidden md:block">
+                                        <div className="font-mono font-bold text-slate-700 text-sm">
+                                            {game.playtime_forever > 0 ? formatHours(game.playtime_forever) : '0.0'}h
+                                        </div>
+                                    </div>
+
+                                    <div className="w-24 flex justify-center">
+                                        {game.playtime_forever === 0 ? (
+                                            <span className="px-3 py-1 rounded-full bg-rose-100/80 backdrop-blur-sm text-rose-600 text-xs font-bold border border-rose-200">Unplayed</span>
+                                        ) : game.playtime_forever > 6000 ? (
+                                            <span className="px-3 py-1 rounded-full bg-emerald-100/80 backdrop-blur-sm text-emerald-600 text-xs font-bold border border-emerald-200">Favorite</span>
+                                        ) : (
+                                            <span className="px-3 py-1 rounded-full bg-slate-100/80 backdrop-blur-sm text-slate-500 text-xs font-bold border border-slate-200">Played</span>
+                                        )}
+                                    </div>
+
+                                    <div className="w-20 flex justify-end gap-2">
+                                        <button 
+                                            onClick={() => openSteamStore(game.appid)}
+                                            className="p-2 rounded-lg bg-white/50 hover:bg-indigo-500 hover:text-white text-slate-400 transition-all shadow-sm"
+                                            title="Steam Store"
+                                        >
+                                            <Gamepad2 className="w-4 h-4" />
+                                        </button>
+                                        <button 
+                                            onClick={() => openSteamDB(game.appid)}
+                                            className="p-2 rounded-lg bg-white/50 hover:bg-blue-500 hover:text-white text-slate-400 transition-all shadow-sm"
+                                            title="SteamDB"
+                                        >
+                                            <Database className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+              ) : (
+                <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-200">
+                    <p className="text-slate-400 italic">No games found matching "{searchTerm}"</p>
+                </div>
+              )}
             </div>
           </div>
         )}
