@@ -205,7 +205,7 @@ const CustomBarChart = ({ data }) => {
   );
 };
 
-const CustomDonutChart = ({ data }) => {
+const CustomDonutChart = ({ data, onCategorySelect, selectedCategory }) => {
   const size = 320;
   const strokeWidth = 24;
   const center = size / 2;
@@ -224,35 +224,67 @@ const CustomDonutChart = ({ data }) => {
     <div className="flex items-center justify-center py-4 pl-4"> {/* Added padding left to offset the visual weight */}
       <div className="relative" style={{ width: size, height: size }}>
         {/* Chart SVG */}
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="rotate-90 select-none drop-shadow-sm">
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="rotate-90 select-none drop-shadow-sm overflow-visible">
+          {/* Visual Layer - PURELY VISUAL (pointer-events-none) */}
           {data.map((item, idx) => {
             if (item.value === 0) return null;
             const segmentLength = (item.value / total) * visibleCircumference;
             const strokeDasharray = `${segmentLength} ${circumference}`;
             const strokeDashoffset = -currentAngle;
+            const originalAngle = currentAngle; // Store for hit test layer
             currentAngle += segmentLength;
 
             const isHovered = hoveredIndex === idx;
-            const isDimmed = hoveredIndex !== null && !isHovered;
+            const isSelected = selectedCategory === item.id;
+            const isDimmed = (hoveredIndex !== null && !isHovered) || (selectedCategory && !isSelected);
 
             return (
               <circle
-                key={idx}
+                key={`visual-${idx}`}
                 cx={center}
                 cy={center}
                 r={radius}
-                fill="transparent"
+                fill="none"
                 stroke={item.color}
-                strokeWidth={isHovered ? strokeWidth + 6 : strokeWidth}
+                strokeWidth={isHovered || isSelected ? strokeWidth + 6 : strokeWidth}
                 strokeDasharray={strokeDasharray}
                 strokeDashoffset={strokeDashoffset}
                 strokeLinecap="round"
-                onMouseEnter={() => setHoveredIndex(idx)}
-                onMouseLeave={() => setHoveredIndex(null)}
-                className={`transition-all duration-300 ease-out cursor-pointer ${isDimmed ? 'opacity-30' : 'opacity-100'} ${isHovered ? 'brightness-110' : ''}`}
+                className={`transition-all duration-300 ease-out pointer-events-none ${isDimmed ? 'opacity-30' : 'opacity-100'} ${isHovered || isSelected ? 'brightness-110' : ''}`}
               />
             );
           })}
+
+          {/* Interaction Layer - INVISIBLE HIT TARGETS (Reset angle loop) */}
+          {(() => {
+            let hitAngle = 0;
+            return data.map((item, idx) => {
+              if (item.value === 0) return null;
+              const segmentLength = (item.value / total) * visibleCircumference;
+              const strokeDasharray = `${segmentLength} ${circumference}`;
+              const strokeDashoffset = -hitAngle;
+              hitAngle += segmentLength;
+
+              return (
+                <circle
+                  key={`hit-${idx}`}
+                  cx={center}
+                  cy={center}
+                  r={radius}
+                  fill="none"
+                  stroke="transparent"
+                  strokeWidth={strokeWidth + 16} // Stable, wide hit area
+                  strokeDasharray={strokeDasharray}
+                  strokeDashoffset={strokeDashoffset}
+                  strokeLinecap="round"
+                  onMouseEnter={() => setHoveredIndex(idx)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                  onClick={(e) => { e.stopPropagation(); onCategorySelect(item.id); }}
+                  className="cursor-pointer transition-none"
+                />
+              );
+            });
+          })()}
         </svg>
 
         {/* Legend positioned in the "Invisible Circle" concept:
@@ -278,18 +310,20 @@ const CustomDonutChart = ({ data }) => {
           <div className="flex flex-col gap-1.5 pointer-events-auto">
             {data.map((item, idx) => {
               const isHovered = hoveredIndex === idx;
-              const isDimmed = hoveredIndex !== null && !isHovered;
+              const isSelected = selectedCategory === item.id;
+              const isDimmed = (hoveredIndex !== null && !isHovered) || (selectedCategory && !isSelected);
 
               return (
                 <div
                   key={idx}
                   onMouseEnter={() => setHoveredIndex(idx)}
                   onMouseLeave={() => setHoveredIndex(null)}
-                  className={`flex items-center gap-2 text-xs cursor-pointer transition-all duration-300 px-2 py-0.5 rounded-lg ${isDimmed ? 'opacity-40 blur-[0.5px]' : 'opacity-100'} ${isHovered ? 'bg-slate-50 scale-105 shadow-sm ring-1 ring-slate-100' : ''}`}
+                  onClick={(e) => { e.stopPropagation(); onCategorySelect(item.id); }}
+                  className={`flex items-center gap-2 text-xs cursor-pointer transition-all duration-300 px-2 py-0.5 rounded-lg ${isDimmed ? 'opacity-40 blur-[0.5px]' : 'opacity-100'} ${isHovered || isSelected ? 'bg-slate-50 scale-105 shadow-sm ring-1 ring-slate-100' : ''}`}
                 >
-                  <div className={`w-2.5 h-2.5 rounded-full shadow-sm shrink-0 transition-transform ${isHovered ? 'scale-125' : ''}`} style={{ backgroundColor: item.color }}></div>
+                  <div className={`w-2.5 h-2.5 rounded-full shadow-sm shrink-0 transition-transform ${isHovered || isSelected ? 'scale-125' : ''}`} style={{ backgroundColor: item.color }}></div>
                   <div className="flex items-baseline gap-2 min-w-0">
-                    <span className={`font-bold truncate transition-colors ${isHovered ? 'text-slate-900' : 'text-slate-600'}`}>{item.label}</span>
+                    <span className={`font-bold truncate transition-colors ${isHovered || isSelected ? 'text-slate-900' : 'text-slate-600'}`}>{item.label}</span>
                     <span className="text-[10px] text-slate-400 font-mono">{Math.round((item.value / total) * 100)}%</span>
                   </div>
                 </div>
@@ -411,10 +445,10 @@ export default function SteamAnalyzer() {
     const sortedGames = [...gamesData].sort((a, b) => b.playtime_forever - a.playtime_forever);
     const top5 = sortedGames.slice(0, 5).map(g => ({ label: g.name, value: Math.round(g.playtime_forever / 60) }));
     const distData = [
-      { label: 'Unplayed (< 1h)', value: 0, color: '#fca5a5' },
-      { label: 'Casual (1-10h)', value: 0, color: '#fcd34d' },
-      { label: 'Regular (10-100h)', value: 0, color: '#93c5fd' },
-      { label: 'Addict (100h+)', value: 0, color: '#6ee7b7' }
+      { id: 'unplayed', label: 'Unplayed (< 1h)', value: 0, color: '#fca5a5' },
+      { id: 'casual', label: 'Casual (1-10h)', value: 0, color: '#fcd34d' },
+      { id: 'regular', label: 'Regular (10-100h)', value: 0, color: '#93c5fd' },
+      { id: 'addict', label: 'Addict (100h+)', value: 0, color: '#6ee7b7' }
     ];
     gamesData.forEach(g => {
       const h = g.playtime_forever / 60;
@@ -424,12 +458,30 @@ export default function SteamAnalyzer() {
     return { totalGames, totalHours: Math.round(totalHours), shameCount: unplayed.length, shamePercentage, averagePlaytime: (totalHours / (played.length || 1)).toFixed(1), top5, distData: activeDistData, sortedGames, unplayedGames: unplayed };
   }, [gamesData]);
 
+  const [selectedCategory, setSelectedCategory] = useState(null);
+
   const filteredGames = useMemo(() => {
     if (!gamesData) return [];
-    return [...gamesData]
-      .sort((a, b) => b.playtime_forever - a.playtime_forever)
-      .filter(g => g.name.toLowerCase().includes(searchTerm.toLowerCase()));
-  }, [gamesData, searchTerm]);
+    let result = [...gamesData]
+      .sort((a, b) => b.playtime_forever - a.playtime_forever);
+
+    if (searchTerm) {
+      result = result.filter(g => g.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    }
+
+    if (selectedCategory) {
+      result = result.filter(g => {
+        const h = g.playtime_forever / 60;
+        if (selectedCategory === 'unplayed') return h < 1;
+        if (selectedCategory === 'casual') return h >= 1 && h < 10;
+        if (selectedCategory === 'regular') return h >= 10 && h < 100;
+        if (selectedCategory === 'addict') return h >= 100;
+        return true;
+      });
+    }
+
+    return result;
+  }, [gamesData, searchTerm, selectedCategory]);
 
   // AI Functions (Using gemini-2.5-flash-preview-09-2025 as per instruction for text)
   const callGemini = async (prompt) => {
@@ -560,7 +612,7 @@ export default function SteamAnalyzer() {
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm"><div className="flex items-center justify-between mb-6"><h3 className="text-lg font-bold text-slate-800 flex items-center gap-2"><BarChart2 className="w-5 h-5 text-indigo-400" />Top 5 Most Played</h3></div><CustomBarChart data={stats.top5} /></div>
-              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm"><div className="flex items-center justify-between mb-6"><h3 className="text-lg font-bold text-slate-800 flex items-center gap-2"><PieChart className="w-5 h-5 text-purple-400" />Library Habits</h3></div><CustomDonutChart data={stats.distData} /></div>
+              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm"><div className="flex items-center justify-between mb-6"><h3 className="text-lg font-bold text-slate-800 flex items-center gap-2"><PieChart className="w-5 h-5 text-purple-400" />Library Habits</h3></div><CustomDonutChart data={stats.distData} onCategorySelect={(id) => setSelectedCategory(prev => prev === id ? null : id)} selectedCategory={selectedCategory} /></div>
             </div>
 
             {/* Library List */}
@@ -568,6 +620,11 @@ export default function SteamAnalyzer() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <h3 className="text-xl font-bold text-slate-800 pl-1">Full Library</h3>
                 <div className="relative">
+                  {selectedCategory && (
+                    <span className="absolute -top-7 right-0 text-xs font-bold text-indigo-500 bg-indigo-50 px-2 py-1 rounded-md animate-in fade-in slide-in-from-bottom-1 cursor-pointer hover:bg-red-50 hover:text-red-500 transition-colors" onClick={() => setSelectedCategory(null)}>
+                      Filter: {selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} ✕
+                    </span>
+                  )}
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" /><input type="text" placeholder="Search games..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-white border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-sm text-slate-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 w-full sm:w-64 outline-none transition-all shadow-sm" />
                 </div>
               </div>
