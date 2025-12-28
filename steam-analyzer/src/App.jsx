@@ -17,103 +17,148 @@ import {
   Loader2,
   Database,
   Calculator,
-  ImageIcon
+  ImageIcon,
+  Calendar,
+  Activity,
+  ChevronDown,
+  ChevronUp,
+  Medal
 } from 'lucide-react';
 
 // --- GEMINI API CONFIGURATION ---
 
 // 🔴 OPTION 1: FOR PREVIEW (Active)
-// Use this line if you want to test in the browser right now.
-// Paste your key inside the quotes.
 const googleApiKey = ""; 
 
 // 🟢 OPTION 2: FOR PRODUCTION / LOCAL (Commented Out)
-// Use this line when you run it on your computer (npm run dev) or deploy to Vercel.
-// It will look for the VITE_GOOGLE_API_KEY in your .env file.
 // const googleApiKey = import.meta.env.VITE_GOOGLE_API_KEY || "";
 
 
-// --- MOCK DATA FOR DEMO MODE ---
+// --- MOCK DATA ---
 const MOCK_USER = {
   steamid: '76561198000000000',
   personaname: 'DemoGamer_99',
   avatarfull: 'https://avatars.akamai.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg',
   profileurl: 'https://steamcommunity.com/',
-  timecreated: 1262304000 // Jan 1 2010
+  timecreated: 1262304000
 };
 
+// Added rtime_last_played (Unix timestamp) for realism
 const MOCK_GAMES = [
-  { appid: 730, name: 'Counter-Strike: Global Offensive', playtime_forever: 85000, img_icon_url: '69f7ebe2735c366c65c0b33dae00e12dc40edbe4' },
-  { appid: 570, name: 'Dota 2', playtime_forever: 120000, img_icon_url: '0bf11a9e2e7760d3fe72db086629305601a337fb' },
-  { appid: 440, name: 'Team Fortress 2', playtime_forever: 4500, img_icon_url: 'e3f595a92552da3d664ad00277fad2107345f743' },
-  { appid: 271590, name: 'Grand Theft Auto V', playtime_forever: 6200, img_icon_url: '1e7c62a87556c52d8b802a433f48a1c6a8585e51' },
-  { appid: 252490, name: 'Rust', playtime_forever: 12000, img_icon_url: '82216e53c44862211624f1c7136015f5c8899880' },
-  { appid: 292030, name: 'The Witcher 3: Wild Hunt', playtime_forever: 8000, img_icon_url: '96940d9d690a7862215c26914561845c083693e5' },
-  { appid: 105600, name: 'Terraria', playtime_forever: 3400, img_icon_url: '858961e95fdb869f7a6295822081597a9b0c58e5' },
-  { appid: 4000, name: 'Garry\'s Mod', playtime_forever: 1500, img_icon_url: '4a6f25cfa2426445d0d9d6e233408de0237e7352' },
-  { appid: 227300, name: 'Euro Truck Simulator 2', playtime_forever: 900, img_icon_url: '197931327170e70417934272828b122026852e18' },
-  { appid: 250900, name: 'The Binding of Isaac: Rebirth', playtime_forever: 2800, img_icon_url: '21398c7608244e43e2f5b66d43236e65126831cb' },
-  { appid: 10, name: 'Counter-Strike', playtime_forever: 30, img_icon_url: '2e478fc6874d06ae5baf0d147f6f21203291aa02' },
-  { appid: 70, name: 'Half-Life', playtime_forever: 400, img_icon_url: '958b7596d11f6d900b73010b991ad34f8a6198f3' },
-  { appid: 620, name: 'Portal 2', playtime_forever: 600, img_icon_url: '2e478fc6874d06ae5baf0d147f6f21203291aa02' },
-  { appid: 892970, name: 'Valheim', playtime_forever: 2100, img_icon_url: '958b7596d11f6d900b73010b991ad34f8a6198f3' },
-  { appid: 1, name: 'Unplayed Game A', playtime_forever: 0, img_icon_url: '' },
-  { appid: 2, name: 'Unplayed Game B', playtime_forever: 0, img_icon_url: '' },
-  { appid: 3, name: 'Unplayed Game C', playtime_forever: 0, img_icon_url: '' },
-  { appid: 4, name: 'Bad Game D', playtime_forever: 15, img_icon_url: '' },
-  { appid: 5, name: 'Indie Gem E', playtime_forever: 120, img_icon_url: '' },
-  { appid: 6, name: 'Simulation F', playtime_forever: 0, img_icon_url: '' },
-  { appid: 7, name: 'RPG G', playtime_forever: 45, img_icon_url: '' },
-  { appid: 8, name: 'Shooter H', playtime_forever: 0, img_icon_url: '' },
+  { appid: 730, name: 'Counter-Strike: Global Offensive', playtime_forever: 85000, rtime_last_played: 1700000000, img_icon_url: '69f7ebe2735c366c65c0b33dae00e12dc40edbe4' },
+  { appid: 570, name: 'Dota 2', playtime_forever: 120000, rtime_last_played: 1698000000, img_icon_url: '0bf11a9e2e7760d3fe72db086629305601a337fb' },
+  { appid: 440, name: 'Team Fortress 2', playtime_forever: 4500, rtime_last_played: 1650000000, img_icon_url: 'e3f595a92552da3d664ad00277fad2107345f743' },
+  { appid: 271590, name: 'Grand Theft Auto V', playtime_forever: 100, rtime_last_played: 1680000000, img_icon_url: '1e7c62a87556c52d8b802a433f48a1c6a8585e51' },
+  { appid: 252490, name: 'Rust', playtime_forever: 12000, rtime_last_played: 1701000000, img_icon_url: '82216e53c44862211624f1c7136015f5c8899880' },
+  { appid: 292030, name: 'The Witcher 3: Wild Hunt', playtime_forever: 8000, rtime_last_played: 1640000000, img_icon_url: '96940d9d690a7862215c26914561845c083693e5' },
+  { appid: 105600, name: 'Terraria', playtime_forever: 200, rtime_last_played: 1690000000, img_icon_url: '858961e95fdb869f7a6295822081597a9b0c58e5' },
+  { appid: 1, name: 'Unplayed Game A', playtime_forever: 0, rtime_last_played: 0, img_icon_url: '' },
+  { appid: 2, name: 'Unplayed Game B', playtime_forever: 0, rtime_last_played: 0, img_icon_url: '' },
 ];
+
+const MOCK_ACHIEVEMENTS = Array.from({ length: 30 }).map((_, i) => ({
+  apiname: `ACHIEVEMENT_${i}`,
+  name: `Achievement ${i + 1}`,
+  description: "You did something amazing in the game.",
+  achieved: 1,
+  unlocktime: 1672531200 + (Math.random() * 31536000) // Random time in the last year
+}));
 
 // --- UTILITY FUNCTIONS ---
 const formatHours = (minutes) => (minutes / 60).toFixed(1);
 const formatNumber = (num) => new Intl.NumberFormat().format(num);
-
-const openSteamDB = (appid) => {
-  window.open(`https://steamdb.info/app/${appid}/`, '_blank');
+const formatDate = (timestamp) => {
+  if (!timestamp) return 'Never';
+  return new Date(timestamp * 1000).toLocaleDateString('en-US', { 
+    year: 'numeric', month: 'short', day: 'numeric' 
+  });
 };
 
-const openSteamStore = (appid) => {
-  window.open(`https://store.steampowered.com/app/${appid}/`, '_blank');
-};
+const openSteamDB = (appid) => window.open(`https://steamdb.info/app/${appid}/`, '_blank');
+const openSteamStore = (appid) => window.open(`https://store.steampowered.com/app/${appid}/`, '_blank');
 
 // --- COMPONENTS ---
 
-// Simple Markdown Parser for AI responses
+// Activity Heatmap Component
+const ActivityHeatmap = ({ achievements }) => {
+  // Generate last 365 days
+  const days = useMemo(() => {
+    const today = new Date();
+    const d = [];
+    for (let i = 364; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      d.push({
+        date: date.toISOString().split('T')[0],
+        count: 0,
+        fullDate: date
+      });
+    }
+    
+    // Map achievements to days
+    achievements.forEach(ach => {
+      if (ach.unlocktime) {
+        const dateStr = new Date(ach.unlocktime * 1000).toISOString().split('T')[0];
+        const dayEntry = d.find(day => day.date === dateStr);
+        if (dayEntry) dayEntry.count += 1;
+      }
+    });
+    return d;
+  }, [achievements]);
+
+  return (
+    <div className="w-full">
+      <div className="flex justify-between items-end mb-2">
+        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Achievement Activity (Last Year)</h4>
+        <div className="text-xs text-slate-400 flex items-center gap-1">
+          <span>Less</span>
+          <div className="w-2 h-2 bg-slate-100 rounded-sm"></div>
+          <div className="w-2 h-2 bg-emerald-200 rounded-sm"></div>
+          <div className="w-2 h-2 bg-emerald-400 rounded-sm"></div>
+          <div className="w-2 h-2 bg-emerald-600 rounded-sm"></div>
+          <span>More</span>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-[2px]">
+        {days.map((day, i) => {
+          let colorClass = "bg-slate-100";
+          if (day.count > 0) colorClass = "bg-emerald-200";
+          if (day.count > 2) colorClass = "bg-emerald-400";
+          if (day.count > 5) colorClass = "bg-emerald-600";
+          
+          return (
+            <div 
+              key={i} 
+              title={`${day.date}: ${day.count} achievements`}
+              className={`w-2 h-2 rounded-sm ${colorClass}`}
+            ></div>
+          )
+        })}
+      </div>
+    </div>
+  );
+};
+
+// ... (Previous Helper Components: SimpleMarkdown, StatCard, AICard, CustomBarChart, CustomDonutChart remain the same)
+// I will include them for completeness but focusing on the Game List changes below.
+
 const SimpleMarkdown = ({ text }) => {
   if (!text) return null;
   return (
     <div className="space-y-1 text-slate-600">
       {text.split('\n').map((line, i) => {
         if (line.trim() === '') return <div key={i} className="h-2" />;
-        
-        // Check for bullet points
         const isBullet = line.trim().startsWith('* ') || line.trim().startsWith('- ');
         const cleanLine = isBullet ? line.trim().substring(2) : line;
-
-        // Check for headers (basic # support)
         const isHeader = line.trim().startsWith('##');
         const headerText = isHeader ? line.trim().replace(/^#+\s*/, '') : cleanLine;
-
-        // Process bold text **bold**
         const parts = headerText.split(/(\*\*.*?\*\*)/g);
-
-        if (isHeader) {
-             return <h4 key={i} className="font-bold text-slate-800 mt-2 mb-1">{headerText.replace(/\*\*/g, '')}</h4>
-        }
-
+        if (isHeader) return <h4 key={i} className="font-bold text-slate-800 mt-2 mb-1">{headerText.replace(/\*\*/g, '')}</h4>
         return (
           <div key={i} className={`${isBullet ? 'pl-4 flex items-start' : ''}`}>
             {isBullet && <span className="mr-2 text-indigo-400">•</span>}
             <p className="inline leading-relaxed">
-                {parts.map((part, j) => {
-                    if (part.startsWith('**') && part.endsWith('**')) {
-                        return <strong key={j} className="font-semibold text-slate-800">{part.slice(2, -2)}</strong>;
-                    }
-                    return part;
-                })}
+                {parts.map((part, j) => (part.startsWith('**') && part.endsWith('**') ? <strong key={j} className="font-semibold text-slate-800">{part.slice(2, -2)}</strong> : part))}
             </p>
           </div>
         );
@@ -139,45 +184,23 @@ const StatCard = ({ title, value, subtext, icon: Icon, colorClass }) => (
 
 const AICard = ({ title, result, loading, onClick, icon: Icon, buttonText }) => (
   <div className="bg-white border border-indigo-50 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-    {/* Soft gradient background decoration */}
     <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-100/50 to-purple-100/50 rounded-bl-full -mr-10 -mt-10 pointer-events-none"></div>
-    
     <div className="relative z-10">
       <div className="flex items-center gap-3 mb-4">
-        <div className="p-2 bg-indigo-50 rounded-xl text-indigo-500">
-          <Icon className="w-5 h-5" />
-        </div>
+        <div className="p-2 bg-indigo-50 rounded-xl text-indigo-500"><Icon className="w-5 h-5" /></div>
         <h3 className="text-lg font-bold text-slate-800">{title}</h3>
       </div>
-
       <div className="min-h-[100px] mb-4">
         {loading ? (
-          <div className="flex items-center gap-2 text-indigo-400 animate-pulse mt-4">
-            <Loader2 className="w-5 h-5 animate-spin" />
-            <span className="text-sm font-medium">Brewing insights...</span>
-          </div>
+          <div className="flex items-center gap-2 text-indigo-400 animate-pulse mt-4"><Loader2 className="w-5 h-5 animate-spin" /><span className="text-sm font-medium">Brewing insights...</span></div>
         ) : result ? (
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-sm">
-            <SimpleMarkdown text={result} />
-          </div>
+          <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-sm"><SimpleMarkdown text={result} /></div>
         ) : (
-          <p className="text-slate-400 text-sm italic">
-            Ready to analyze your library. Click below to start.
-          </p>
+          <p className="text-slate-400 text-sm italic">Ready to analyze your library. Click below to start.</p>
         )}
       </div>
-
-      <button
-        onClick={onClick}
-        disabled={loading}
-        className="w-full py-2.5 px-4 bg-indigo-100 hover:bg-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed text-indigo-700 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2"
-      >
-        {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-            <Sparkles className="w-4 h-4" />
-        )}
-        {buttonText}
+      <button onClick={onClick} disabled={loading} className="w-full py-2.5 px-4 bg-indigo-100 hover:bg-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed text-indigo-700 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2">
+        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}{buttonText}
       </button>
     </div>
   </div>
@@ -189,16 +212,8 @@ const CustomBarChart = ({ data }) => {
     <div className="flex flex-col gap-4 w-full">
       {data.map((item, idx) => (
         <div key={idx} className="w-full group">
-          <div className="flex justify-between text-sm mb-1.5">
-            <span className="text-slate-700 font-semibold truncate w-3/4">{item.label}</span>
-            <span className="text-slate-400 font-mono text-xs">{formatNumber(item.value)}h</span>
-          </div>
-          <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
-            <div 
-              className="bg-indigo-300 h-full rounded-full transition-all duration-1000 ease-out group-hover:bg-indigo-400"
-              style={{ width: `${(item.value / maxVal) * 100}%` }}
-            ></div>
-          </div>
+          <div className="flex justify-between text-sm mb-1.5"><span className="text-slate-700 font-semibold truncate w-3/4">{item.label}</span><span className="text-slate-400 font-mono text-xs">{formatNumber(item.value)}h</span></div>
+          <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden"><div className="bg-indigo-300 h-full rounded-full transition-all duration-1000 ease-out group-hover:bg-indigo-400" style={{ width: `${(item.value / maxVal) * 100}%` }}></div></div>
         </div>
       ))}
     </div>
@@ -206,57 +221,20 @@ const CustomBarChart = ({ data }) => {
 };
 
 const CustomDonutChart = ({ data }) => {
-  const size = 200;
-  const strokeWidth = 20;
-  const center = size / 2;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  
-  let currentAngle = 0;
-  const total = data.reduce((acc, curr) => acc + curr.value, 0);
-
-  // Offset to start at top (12 o'clock)
-  const initialOffset = circumference / 4;
-
+  const size = 200; const strokeWidth = 20; const center = size / 2; const radius = (size - strokeWidth) / 2; const circumference = 2 * Math.PI * radius;
+  let currentAngle = 0; const total = data.reduce((acc, curr) => acc + curr.value, 0); const initialOffset = circumference / 4;
   return (
     <div className="flex items-center justify-center gap-8">
       <div className="relative w-48 h-48">
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
           {data.map((item, idx) => {
-            const strokeDasharray = `${(item.value / total) * circumference} ${circumference}`;
-            const strokeDashoffset = -currentAngle + initialOffset;
-            currentAngle += (item.value / total) * circumference;
-            return (
-              <circle
-                key={idx}
-                cx={center}
-                cy={center}
-                r={radius}
-                fill="transparent"
-                stroke={item.color}
-                strokeWidth={strokeWidth}
-                strokeDasharray={strokeDasharray}
-                strokeDashoffset={strokeDashoffset}
-                strokeLinecap="round"
-                className="transition-all duration-1000 hover:opacity-80"
-              />
-            );
+            const strokeDasharray = `${(item.value / total) * circumference} ${circumference}`; const strokeDashoffset = -currentAngle + initialOffset; currentAngle += (item.value / total) * circumference;
+            return <circle key={idx} cx={center} cy={center} r={radius} fill="transparent" stroke={item.color} strokeWidth={strokeWidth} strokeDasharray={strokeDasharray} strokeDashoffset={strokeDashoffset} strokeLinecap="round" className="transition-all duration-1000 hover:opacity-80" />;
           })}
         </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-3xl font-bold text-slate-700">{data.length}</span>
-            <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Types</span>
-        </div>
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"><span className="text-3xl font-bold text-slate-700">{data.length}</span><span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Types</span></div>
       </div>
-      <div className="flex flex-col gap-3">
-        {data.map((item, idx) => (
-          <div key={idx} className="flex items-center gap-2 text-sm">
-            <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: item.color }}></div>
-            <span className="text-slate-600 font-medium">{item.label}</span>
-            <span className="text-slate-400">({Math.round((item.value/total)*100)}%)</span>
-          </div>
-        ))}
-      </div>
+      <div className="flex flex-col gap-3">{data.map((item, idx) => (<div key={idx} className="flex items-center gap-2 text-sm"><div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: item.color }}></div><span className="text-slate-600 font-medium">{item.label}</span><span className="text-slate-400">({Math.round((item.value/total)*100)}%)</span></div>))}</div>
     </div>
   );
 };
@@ -274,15 +252,18 @@ export default function SteamAnalyzer() {
   const [useProxy, setUseProxy] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   
+  // Details State
+  const [expandedGame, setExpandedGame] = useState(null);
+  const [achievements, setAchievements] = useState({}); // Map of appid -> achievement list
+  const [loadingAch, setLoadingAch] = useState(false);
+
   // AI State
   const [aiProfile, setAiProfile] = useState('');
   const [aiRecommendation, setAiRecommendation] = useState('');
   const [aiValuation, setAiValuation] = useState('');
   const [aiLoadingType, setAiLoadingType] = useState(null); 
 
-  useEffect(() => {
-    loadDemoData();
-  }, []);
+  useEffect(() => { loadDemoData(); }, []);
 
   const loadDemoData = () => {
     setLoading(true);
@@ -292,28 +273,16 @@ export default function SteamAnalyzer() {
       setLoading(false);
       setIsDemo(true);
       setError('');
-      setAiProfile('');
-      setAiRecommendation('');
-      setAiValuation('');
+      setAiProfile(''); setAiRecommendation(''); setAiValuation('');
     }, 800);
   };
 
   const fetchData = async () => {
-    if (!steamApiKey || !steamId) {
-      setError("Please provide both an API Key and Steam ID.");
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    setIsDemo(false);
-    setAiProfile('');
-    setAiRecommendation('');
-    setAiValuation('');
+    if (!steamApiKey || !steamId) { setError("Please provide both an API Key and Steam ID."); return; }
+    setLoading(true); setError(''); setIsDemo(false); setAiProfile(''); setAiRecommendation(''); setAiValuation(''); setAchievements({});
 
     try {
       const proxyUrl = useProxy ? 'https://api.allorigins.win/get?url=' : '';
-      
       const fetchWithProxy = async (url) => {
         const fullUrl = proxyUrl ? `${proxyUrl}${encodeURIComponent(url)}` : url;
         const res = await fetch(fullUrl);
@@ -325,25 +294,62 @@ export default function SteamAnalyzer() {
       const userUrl = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${steamApiKey}&steamids=${steamId}`;
       const userRes = await fetchWithProxy(userUrl);
       const player = userRes.response?.players?.[0];
-
       if (!player) throw new Error("User not found or profile is private.");
 
       const gamesUrl = `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${steamApiKey}&steamid=${steamId}&include_appinfo=true&include_played_free_games=true`;
       const gamesRes = await fetchWithProxy(gamesUrl);
       const games = gamesRes.response?.games;
-
       if (!games) throw new Error("Could not fetch games. Is the profile public?");
 
       setUserData(player);
       setGamesData(games);
     } catch (err) {
       console.error(err);
-      setError(`Failed to fetch data: ${err.message}. Ensure your API Key is valid and your Steam Profile "Game Details" are set to Public.`);
+      setError(`Failed to fetch data: ${err.message}.`);
+    } finally { setLoading(false); }
+  };
+
+  const fetchAchievements = async (appid) => {
+    if (achievements[appid] || isDemo) {
+        if (isDemo && !achievements[appid]) {
+            // Set mock data for demo
+            setAchievements(prev => ({ ...prev, [appid]: MOCK_ACHIEVEMENTS }));
+        }
+        return; 
+    }
+    
+    setLoadingAch(true);
+    try {
+      const proxyUrl = useProxy ? 'https://api.allorigins.win/get?url=' : '';
+      const url = `https://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v1/?appid=${appid}&key=${steamApiKey}&steamid=${steamId}`;
+      const fullUrl = proxyUrl ? `${proxyUrl}${encodeURIComponent(url)}` : url;
+      
+      const res = await fetch(fullUrl);
+      if (!res.ok) throw new Error("No achievements found or private");
+      const json = await res.json();
+      // Only keep unlocked ones for the heatmap
+      const proxyJson = proxyUrl ? JSON.parse(json.contents) : json;
+      const unlocked = proxyJson.playerstats?.achievements?.filter(a => a.achieved === 1) || [];
+      
+      setAchievements(prev => ({ ...prev, [appid]: unlocked }));
+    } catch (err) {
+      console.log("Achievement fetch failed (likely no achievements for this game):", err);
+      setAchievements(prev => ({ ...prev, [appid]: [] }));
     } finally {
-      setLoading(false);
+      setLoadingAch(false);
     }
   };
 
+  const handleGameClick = (appid) => {
+    if (expandedGame === appid) {
+        setExpandedGame(null);
+    } else {
+        setExpandedGame(appid);
+        fetchAchievements(appid);
+    }
+  };
+
+  // ... (Stats and AI functions remain the same)
   const stats = useMemo(() => {
     if (!gamesData) return null;
 
@@ -498,7 +504,7 @@ export default function SteamAnalyzer() {
 
   return (
     <div className="min-h-screen bg-orange-50 font-sans selection:bg-indigo-200 selection:text-indigo-900 pb-20">
-      {/* Header / Config */}
+      {/* Header code same as before... */}
       <div className="bg-white border-b border-orange-100 shadow-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
@@ -748,9 +754,7 @@ export default function SteamAnalyzer() {
               </div>
 
               {filteredGames.length > 0 ? (
-                // Flush list container: No Gap, Rounded Top/Bottom, Shadow
                 <div className="flex flex-col rounded-2xl shadow-sm border border-slate-100 bg-white isolate">
-                    {/* Header Row for large screens */}
                     <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 border-b border-slate-100 bg-slate-50/50 rounded-t-2xl text-xs font-bold text-slate-400 uppercase tracking-wider">
                         <div className="col-span-6">Game Name</div>
                         <div className="col-span-2 text-right">Hours</div>
@@ -758,103 +762,165 @@ export default function SteamAnalyzer() {
                         <div className="col-span-2 text-center">Actions</div>
                     </div>
 
-                    {filteredGames.map((game) => (
-                        <div 
-                            key={game.appid} 
-                            // FLUSH ITEM STYLING:
-                            // - border-b border-slate-100 (separator)
-                            // - last:border-0 (no separator on last item)
-                            // - first:rounded-t (if no header row, but we have one, so we round bottom only)
-                            // - last:rounded-b-2xl
-                            // - hover:z-20 (pop over neighbors)
-                            // - hover:scale-[1.03] (pop out)
-                            // - hover:rounded-xl (restore rounded corners when popped out)
-                            className="group relative w-full h-24 md:h-20 bg-white 
-                                       border-b border-slate-100 last:border-b-0 last:rounded-b-2xl
-                                       hover:z-20 hover:scale-[1.03] hover:shadow-2xl hover:rounded-xl hover:border-transparent
-                                       transition-all duration-300 ease-out origin-center cursor-default"
-                        >
-                            {/* Background Banner Image */}
-                            <div className="absolute inset-0 z-0 bg-white rounded-inherit overflow-hidden">
-                                <img 
-                                    src={`https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${game.appid}/library_hero.jpg`}
-                                    alt="" 
-                                    className="w-full h-full object-cover opacity-10 group-hover:opacity-100 transition-opacity duration-300 ease-in-out"
-                                    onError={(e) => {
-                                        // Fallback if library_hero fails
-                                        e.currentTarget.src = `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${game.appid}/header.jpg`;
-                                        e.currentTarget.onerror = null; // Prevent infinite loop
-                                    }}
-                                />
-                                {/* Gradient Overlay for text readability */}
-                                {/* Default: Strong white overlay (via-white/90) */}
-                                {/* Hover: Weak transparent overlay on right (via-white/30) to show image, keeps text readable on left */}
-                                <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent group-hover:from-white/90 group-hover:via-white/30 group-hover:to-transparent transition-all duration-300"></div>
-                            </div>
+                    {filteredGames.map((game) => {
+                        const isExpanded = expandedGame === game.appid;
+                        const achs = achievements[game.appid] || [];
 
-                            {/* Card Content */}
-                            <div className="relative z-10 h-full flex items-center justify-between px-6">
-                                {/* Game Title & Icon */}
-                                <div className="flex items-center gap-4 flex-1 min-w-0">
-                                    <div className="w-10 h-10 rounded-lg bg-white/80 backdrop-blur-sm shadow-sm flex items-center justify-center shrink-0 border border-slate-100 group-hover:border-slate-200 transition-colors">
-                                        {game.img_icon_url ? (
-                                            <img 
-                                                src={`http://media.steampowered.com/steamcommunity/public/images/apps/${game.appid}/${game.img_icon_url}.jpg`} 
-                                                alt="" 
-                                                className="w-full h-full object-cover rounded-lg"
-                                            />
-                                        ) : (
-                                            <ImageIcon className="w-5 h-5 text-slate-300" />
-                                        )}
-                                    </div>
-                                    <span className="font-bold text-slate-800 text-base md:text-lg truncate drop-shadow-sm group-hover:text-indigo-900 transition-colors">
-                                        {game.name}
-                                    </span>
+                        return (
+                        <div key={game.appid} className={`group relative w-full bg-white border-b border-slate-100 last:border-b-0 last:rounded-b-2xl transition-all duration-300 ease-out origin-center cursor-default ${isExpanded ? 'z-30 my-4 rounded-2xl shadow-xl border-slate-200 scale-[1.01]' : 'hover:z-20 hover:scale-[1.01] hover:shadow-lg hover:rounded-xl hover:border-transparent'}`}>
+                            
+                            {/* Main Card Header (Clickable) */}
+                            <div 
+                                onClick={() => handleGameClick(game.appid)}
+                                className="relative h-24 md:h-20 overflow-hidden cursor-pointer rounded-t-xl rounded-b-xl transition-all"
+                                style={{ borderRadius: isExpanded ? '1rem 1rem 0 0' : 'inherit' }}
+                            >
+                                {/* Banner */}
+                                <div className="absolute inset-0 z-0 bg-white">
+                                    <img 
+                                        src={`https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${game.appid}/library_hero.jpg`}
+                                        alt="" 
+                                        className="w-full h-full object-cover opacity-10 group-hover:opacity-100 transition-opacity duration-300 ease-in-out"
+                                        onError={(e) => { e.currentTarget.src = `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${game.appid}/header.jpg`; e.currentTarget.onerror = null; }}
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent group-hover:from-white/90 group-hover:via-white/30 group-hover:to-transparent transition-all duration-300"></div>
                                 </div>
 
-                                {/* Stats & Badges (Hidden on very small screens) */}
-                                <div className="flex items-center gap-2 md:gap-12 shrink-0">
-                                    <div className="w-24 text-right hidden md:block">
-                                        <div className="font-mono font-bold text-slate-700 text-sm group-hover:text-slate-900">
-                                            {game.playtime_forever > 0 ? formatHours(game.playtime_forever) : '0.0'}h
+                                <div className="relative z-10 h-full flex items-center justify-between px-6">
+                                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                                        <div className="w-10 h-10 rounded-lg bg-white/80 backdrop-blur-sm shadow-sm flex items-center justify-center shrink-0 border border-slate-100 group-hover:border-slate-200">
+                                            {game.img_icon_url ? <img src={`http://media.steampowered.com/steamcommunity/public/images/apps/${game.appid}/${game.img_icon_url}.jpg`} alt="" className="w-full h-full object-cover rounded-lg" /> : <ImageIcon className="w-5 h-5 text-slate-300" />}
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="font-bold text-slate-800 text-base md:text-lg truncate drop-shadow-sm group-hover:text-indigo-900 transition-colors">{game.name}</span>
+                                            {isExpanded && <span className="text-xs text-indigo-500 font-medium">Viewing Details</span>}
                                         </div>
                                     </div>
 
-                                    <div className="w-24 flex justify-center">
-                                        {game.playtime_forever === 0 ? (
-                                            <span className="px-3 py-1 rounded-full bg-rose-100 text-rose-700 text-xs font-bold border border-rose-200 shadow-sm">Unplayed</span>
-                                        ) : game.playtime_forever > 6000 ? (
-                                            <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-200 shadow-sm">Favorite</span>
-                                        ) : (
-                                            <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold border border-indigo-200 shadow-sm">Played</span>
-                                        )}
-                                    </div>
-
-                                    <div className="w-20 flex justify-end gap-2">
-                                        <button 
-                                            onClick={() => openSteamStore(game.appid)}
-                                            className="p-2 rounded-lg bg-white hover:bg-indigo-500 hover:text-white text-slate-400 border border-slate-200 hover:border-indigo-500 transition-all shadow-sm"
-                                            title="Steam Store"
-                                        >
-                                            <Gamepad2 className="w-4 h-4" />
-                                        </button>
-                                        <button 
-                                            onClick={() => openSteamDB(game.appid)}
-                                            className="p-2 rounded-lg bg-white hover:bg-[#1b2838] hover:text-[#3899e8] text-slate-400 border border-slate-200 hover:border-[#1b2838] transition-all shadow-sm"
-                                            title="SteamDB"
-                                        >
-                                            <Database className="w-4 h-4" />
-                                        </button>
+                                    <div className="flex items-center gap-2 md:gap-12 shrink-0">
+                                        <div className="w-24 text-right hidden md:block">
+                                            <div className="font-mono font-bold text-slate-700 text-sm group-hover:text-slate-900">{game.playtime_forever > 0 ? formatHours(game.playtime_forever) : '0.0'}h</div>
+                                        </div>
+                                        <div className="w-24 flex justify-center">
+                                            {game.playtime_forever === 0 ? (
+                                                <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-rose-100/90 backdrop-blur-sm text-rose-700 text-xs font-bold border border-rose-200 shadow-sm">Unplayed</span>
+                                            ) : game.playtime_forever > 6000 ? (
+                                                <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-100/90 backdrop-blur-sm text-emerald-700 text-xs font-bold border border-emerald-200 shadow-sm">Favorite</span>
+                                            ) : (
+                                                <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-indigo-100/90 backdrop-blur-sm text-indigo-700 text-xs font-bold border border-indigo-200 shadow-sm">Played</span>
+                                            )}
+                                        </div>
+                                        <div className="w-8 flex justify-end">
+                                            {isExpanded ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-300 group-hover:text-slate-500" />}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+
+                            {/* EXPANDED DETAILS PANEL */}
+                            {isExpanded && (
+                                <div className="bg-slate-50/80 border-t border-slate-100 p-6 rounded-b-2xl animate-in slide-in-from-top-2 duration-300">
+                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                        
+                                        {/* Left Column: Stats & Links */}
+                                        <div className="space-y-6">
+                                            <div>
+                                                <h4 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2"><Clock className="w-4 h-4 text-indigo-500"/> Playtime Analysis</h4>
+                                                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                                                    <div>
+                                                        <div className="flex justify-between text-xs text-slate-500 mb-1">
+                                                            <span>Total Hours</span>
+                                                            <span className="font-mono text-slate-700 font-bold">{formatNumber(game.playtime_forever / 60)}h</span>
+                                                        </div>
+                                                        <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                                                            <div className="bg-indigo-400 h-full rounded-full" style={{ width: '100%' }}></div>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Last Played</span>
+                                                        <p className="text-slate-700 font-medium">{game.rtime_last_played ? formatDate(game.rtime_last_played) : 'Unknown'}</p>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Est. Sessions</span>
+                                                        <p className="text-slate-700 font-medium">{Math.max(1, Math.round(game.playtime_forever / 90))} <span className="text-slate-400 text-xs font-normal">(assuming 1.5h avg)</span></p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex gap-2">
+                                                <button onClick={(e) => { e.stopPropagation(); openSteamStore(game.appid); }} className="flex-1 py-2 rounded-lg bg-white border border-slate-200 hover:border-indigo-400 hover:text-indigo-600 text-slate-500 text-sm font-bold transition-all shadow-sm flex items-center justify-center gap-2">
+                                                    <Gamepad2 className="w-4 h-4" /> Store
+                                                </button>
+                                                <button onClick={(e) => { e.stopPropagation(); openSteamDB(game.appid); }} className="flex-1 py-2 rounded-lg bg-white border border-slate-200 hover:border-blue-400 hover:text-blue-600 text-slate-500 text-sm font-bold transition-all shadow-sm flex items-center justify-center gap-2">
+                                                    <Database className="w-4 h-4" /> SteamDB
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Right Column: Achievements & Activity */}
+                                        <div className="lg:col-span-2 space-y-6">
+                                            {/* Heatmap */}
+                                            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                                                <div className="flex items-center gap-2 mb-4">
+                                                    <div className="p-1.5 bg-emerald-100 rounded-md text-emerald-600"><Activity className="w-4 h-4" /></div>
+                                                    <h4 className="text-sm font-bold text-slate-700">Victory Heatmap</h4>
+                                                </div>
+                                                {loadingAch ? (
+                                                    <div className="h-32 flex items-center justify-center text-slate-400"><Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading stats...</div>
+                                                ) : achs.length > 0 ? (
+                                                    <ActivityHeatmap achievements={achs} />
+                                                ) : (
+                                                    <div className="h-24 flex items-center justify-center text-slate-400 text-sm italic bg-slate-50 rounded-lg border border-dashed border-slate-200">
+                                                        No achievement history available for this game.
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Achievement List */}
+                                            <div>
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <h4 className="text-sm font-bold text-slate-700 flex items-center gap-2"><Trophy className="w-4 h-4 text-amber-500"/> Achievement Vault</h4>
+                                                    <span className="text-xs font-bold bg-amber-100 text-amber-700 px-2 py-1 rounded-full">{achs.length} Unlocked</span>
+                                                </div>
+                                                
+                                                <div className="bg-white rounded-xl border border-slate-200 shadow-sm max-h-60 overflow-y-auto custom-scrollbar p-1">
+                                                    {loadingAch ? (
+                                                        <div className="p-8 text-center text-slate-400 italic">Fetching trophy data...</div>
+                                                    ) : achs.length > 0 ? (
+                                                        <div className="divide-y divide-slate-50">
+                                                            {achs.map((ach, idx) => (
+                                                                <div key={idx} className="p-3 hover:bg-slate-50 flex items-center gap-3 transition-colors">
+                                                                    <div className="w-10 h-10 rounded bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center border border-amber-200 shrink-0">
+                                                                        <Medal className="w-5 h-5 text-amber-500" />
+                                                                    </div>
+                                                                    <div className="min-w-0 flex-1">
+                                                                        <p className="text-sm font-bold text-slate-700 truncate">{ach.name || ach.apiname}</p>
+                                                                        <p className="text-xs text-slate-400 truncate">{ach.description || "Unlocked via Steam"}</p>
+                                                                    </div>
+                                                                    <div className="text-right shrink-0">
+                                                                        <p className="text-xs font-bold text-slate-500">{ach.unlocktime ? formatDate(ach.unlocktime) : 'Unknown'}</p>
+                                                                        <p className="text-[10px] text-slate-300 font-mono">UNLOCKED</p>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="p-8 text-center text-slate-400 text-sm">
+                                                            No unlocked achievements found.<br/>
+                                                            <span className="text-xs opacity-70">(Or private profile settings)</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                    ))}
+                    )})}
                 </div>
               ) : (
-                <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-200 shadow-sm">
-                    <p className="text-slate-400 italic">No games found matching "{searchTerm}"</p>
-                </div>
+                <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-200 shadow-sm"><p className="text-slate-400 italic">No games found matching "{searchTerm}"</p></div>
               )}
             </div>
           </div>
