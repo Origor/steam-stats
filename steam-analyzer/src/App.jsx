@@ -73,8 +73,8 @@ const formatDate = (timestamp) => {
   });
 };
 
-const openSteamDB = (appid) => window.open(`https://steamdb.info/app/${appid}/`, '_blank');
-const openSteamStore = (appid) => window.open(`https://store.steampowered.com/app/${appid}/`, '_blank');
+const openSteamDB = (appid) => window.open(`https://steamdb.info/app/${appid}/`, '_blank', 'noopener,noreferrer');
+const openSteamStore = (appid) => window.open(`https://store.steampowered.com/app/${appid}/`, '_blank', 'noopener,noreferrer');
 
 // --- COMPONENTS ---
 
@@ -368,7 +368,7 @@ export default function SteamAnalyzer() {
 
   const [expandedGame, setExpandedGame] = useState(null);
   const [achievements, setAchievements] = useState({});
-  const [loadingAch, setLoadingAch] = useState(false);
+  const [loadingAchId, setLoadingAchId] = useState(null);
 
   const [aiProfile, setAiProfile] = useState('');
   const [aiRecommendation, setAiRecommendation] = useState('');
@@ -428,7 +428,7 @@ export default function SteamAnalyzer() {
       }
       return;
     }
-    setLoadingAch(true);
+    setLoadingAchId(appid);
     try {
       const proxyUrl = useProxy ? 'https://api.allorigins.win/get?url=' : '';
       const url = `https://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v1/?appid=${appid}&key=${steamApiKey}&steamid=${steamId}`;
@@ -443,7 +443,7 @@ export default function SteamAnalyzer() {
       console.log("Achievement fetch failed:", err);
       setAchievements(prev => ({ ...prev, [appid]: [] }));
     } finally {
-      setLoadingAch(false);
+      setLoadingAchId(prev => (prev === appid ? null : prev));
     }
   };
 
@@ -678,7 +678,7 @@ export default function SteamAnalyzer() {
                           <div className="relative z-10 h-full flex md:grid md:grid-cols-12 md:gap-4 items-center justify-between px-6">
                             <div className="flex items-center gap-4 flex-1 min-w-0 md:col-span-6">
                               <div className="w-10 h-10 rounded-lg bg-white/80 backdrop-blur-sm shadow-sm flex items-center justify-center shrink-0 border border-slate-100 group-hover:border-slate-200">
-                                {game.img_icon_url ? <img src={`http://media.steampowered.com/steamcommunity/public/images/apps/${game.appid}/${game.img_icon_url}.jpg`} alt="" className="w-full h-full object-cover rounded-lg" /> : <ImageIcon className="w-5 h-5 text-slate-300" />}
+                                {game.img_icon_url ? <img src={`https://media.steampowered.com/steamcommunity/public/images/apps/${game.appid}/${game.img_icon_url}.jpg`} alt="" className="w-full h-full object-cover rounded-lg" /> : <ImageIcon className="w-5 h-5 text-slate-300" />}
                               </div>
                               <div className="flex flex-col">
                                 <span className="font-bold text-slate-800 text-base md:text-lg truncate drop-shadow-sm group-hover:text-indigo-900 transition-colors">{game.name}</span>
@@ -741,12 +741,12 @@ export default function SteamAnalyzer() {
                               <div className="lg:col-span-2 space-y-6">
                                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                                   <div className="flex items-center gap-2 mb-4"><div className="p-1.5 bg-emerald-100 rounded-md text-emerald-600"><Activity className="w-4 h-4" /></div><h4 className="text-sm font-bold text-slate-700">Victory Heatmap</h4></div>
-                                  {loadingAch ? (<div className="h-32 flex items-center justify-center text-slate-400"><Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading stats...</div>) : achs.length > 0 ? (<ActivityHeatmap achievements={achs} />) : (<div className="h-24 flex items-center justify-center text-slate-400 text-sm italic bg-slate-50 rounded-lg border border-dashed border-slate-200">No achievement history available for this game.</div>)}
+                                  {loadingAchId === game.appid ? (<div className="h-32 flex items-center justify-center text-slate-400"><Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading stats...</div>) : achs.length > 0 ? (<ActivityHeatmap achievements={achs} />) : (<div className="h-24 flex items-center justify-center text-slate-400 text-sm italic bg-slate-50 rounded-lg border border-dashed border-slate-200">No achievement history available for this game.</div>)}
                                 </div>
                                 <div>
                                   <div className="flex items-center justify-between mb-3"><h4 className="text-sm font-bold text-slate-700 flex items-center gap-2"><Trophy className="w-4 h-4 text-amber-500" /> Achievement Vault</h4><span className="text-xs font-bold bg-amber-100 text-amber-700 px-2 py-1 rounded-full">{achs.length} Unlocked</span></div>
                                   <div className="bg-white rounded-xl border border-slate-200 shadow-sm max-h-60 overflow-y-auto custom-scrollbar p-1">
-                                    {loadingAch ? (<div className="p-8 text-center text-slate-400 italic">Fetching trophy data...</div>) : achs.length > 0 ? (
+                                    {loadingAchId === game.appid ? (<div className="p-8 text-center text-slate-400 italic">Fetching trophy data...</div>) : achs.length > 0 ? (
                                       <div className="divide-y divide-slate-50">
                                         {achs.map((ach, idx) => (
                                           <div key={idx} className="p-3 hover:bg-slate-50 flex items-center gap-3 transition-colors">
