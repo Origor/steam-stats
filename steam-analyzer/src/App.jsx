@@ -239,7 +239,7 @@ const CustomDonutChart = ({ data }) => {
             );
           })}
         </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none rotate-90">
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <span className="text-3xl font-bold text-slate-700">{data.length}</span>
             <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Types</span>
         </div>
