@@ -1,10 +1,17 @@
+use governor::{
+    clock::DefaultClock, middleware::NoOpMiddleware, state::InMemoryState, RateLimiter,
+};
+use nonzero_ext::nonzero;
 use sqlx::{sqlite::SqlitePoolOptions, Pool, Sqlite};
 use std::env;
+use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct AppState {
     pub db: Pool<Sqlite>,
     pub client: reqwest::Client,
+    pub steam_global_limiter:
+        Arc<RateLimiter<governor::state::NotKeyed, InMemoryState, DefaultClock, NoOpMiddleware>>,
 }
 
 pub async fn init_db() -> Result<Pool<Sqlite>, sqlx::Error> {
@@ -16,9 +23,7 @@ pub async fn init_db() -> Result<Pool<Sqlite>, sqlx::Error> {
         .await?;
 
     // Run migrations
-    sqlx::migrate!("./migrations")
-        .run(&pool)
-        .await?;
+    sqlx::migrate!("./migrations").run(&pool).await?;
 
     println!("✅ Database migration success");
 

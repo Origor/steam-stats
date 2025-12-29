@@ -7,7 +7,6 @@ use axum::{
 use serde_json::{json, Value};
 use sqlx::Row;
 use std::env;
- // For simple time checking
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -46,7 +45,16 @@ async fn get_player_achievements(
     }
 
     let api_key = env::var("STEAM_API_KEY").unwrap_or_default();
-    match steam_api::fetch_player_achievements(&state.client, &api_key, &steam_id, &app_id).await {
+    // Pass steam_global_limiter
+    match steam_api::fetch_player_achievements(
+        &state.client,
+        &api_key,
+        &steam_id,
+        &app_id,
+        &state.steam_global_limiter,
+    )
+    .await
+    {
         Ok(data) => {
             // Cache it
             let json_str = serde_json::to_string(&data).unwrap_or_default();
@@ -101,7 +109,14 @@ async fn get_user_steam_data(
     if !use_cache {
         // Fetch from Steam
         let api_key = env::var("STEAM_API_KEY").unwrap_or_default();
-        match steam_api::fetch_player_summary(&state.client, &api_key, &steam_id).await {
+        match steam_api::fetch_player_summary(
+            &state.client,
+            &api_key,
+            &steam_id,
+            &state.steam_global_limiter,
+        )
+        .await
+        {
             Ok(data) => {
                 summary_data = Some(data.clone());
                 // Save to DB
@@ -162,7 +177,14 @@ async fn get_user_steam_data(
 
     if games_data.is_none() {
         let api_key = env::var("STEAM_API_KEY").unwrap_or_default();
-        if let Ok(data) = steam_api::fetch_owned_games(&state.client, &api_key, &steam_id).await {
+        if let Ok(data) = steam_api::fetch_owned_games(
+            &state.client,
+            &api_key,
+            &steam_id,
+            &state.steam_global_limiter,
+        )
+        .await
+        {
             games_data = Some(data.clone());
             let json_str = serde_json::to_string(&data).unwrap_or_default();
             let _ = sqlx::query(
