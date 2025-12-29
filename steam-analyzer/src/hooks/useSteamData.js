@@ -28,18 +28,6 @@ export function useSteamData({ steamId, useProxy }) {
     };
 
     const fetchData = async () => {
-        // API Key is now handled by backend
-
-        // Note: Backend handles API key for player/games data, but we might still need key for achievements
-        // if generic 'fetchAchievements' still runs client-side.
-
-
-        // Use provided key, or fallback to dev env var if in dev mode
-        const effectiveKey = steamApiKey || (import.meta.env.DEV ? import.meta.env.VITE_DEV_STEAM_API_KEY : '');
-
-        // Note: Backend handles API key for player/games data, but we might still need key for achievements
-        // if generic 'fetchAchievements' still runs client-side.
-
         if (!steamId) {
             setError("Please provide a Steam ID.");
             return;
