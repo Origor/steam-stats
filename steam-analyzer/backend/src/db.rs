@@ -1,9 +1,13 @@
 use governor::{
-    clock::DefaultClock, middleware::NoOpMiddleware, state::InMemoryState, RateLimiter,
+    clock::DefaultClock,
+    middleware::NoOpMiddleware,
+    state::{keyed::DefaultKeyedStateStore, InMemoryState},
+    Quota, RateLimiter,
 };
 use nonzero_ext::nonzero;
 use sqlx::{sqlite::SqlitePoolOptions, Pool, Sqlite};
 use std::env;
+use std::net::IpAddr;
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -12,6 +16,8 @@ pub struct AppState {
     pub client: reqwest::Client,
     pub steam_global_limiter:
         Arc<RateLimiter<governor::state::NotKeyed, InMemoryState, DefaultClock, NoOpMiddleware>>,
+    pub user_limiter:
+        Arc<RateLimiter<IpAddr, DefaultKeyedStateStore<IpAddr>, DefaultClock, NoOpMiddleware>>,
 }
 
 pub async fn init_db() -> Result<Pool<Sqlite>, sqlx::Error> {

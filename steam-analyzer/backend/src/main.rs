@@ -29,10 +29,17 @@ async fn main() {
         .allow_burst(NonZeroU32::new(190).unwrap());
     let steam_global_limiter = Arc::new(RateLimiter::direct(steam_quota));
 
+    // User Rate Limiter: 30 requests per minute
+    let user_quota = Quota::with_period(Duration::from_secs(60))
+        .unwrap()
+        .allow_burst(NonZeroU32::new(30).unwrap());
+    let user_limiter = Arc::new(RateLimiter::keyed(user_quota));
+
     let app_state = db::AppState {
         db: pool,
         client,
         steam_global_limiter,
+        user_limiter,
     };
 
     let app = Router::new()
@@ -54,5 +61,10 @@ async fn main() {
 
     println!("listening on {}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await
+    .unwrap();
 }

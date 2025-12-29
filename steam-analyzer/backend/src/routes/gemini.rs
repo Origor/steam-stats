@@ -1,8 +1,13 @@
 use crate::db::AppState;
-use axum::{extract::State, routing::post, Json, Router};
+use axum::{
+    extract::{ConnectInfo, State},
+    routing::post,
+    Json, Router,
+};
 use serde::Deserialize;
 use serde_json::{json, Value};
 use std::env;
+use std::net::SocketAddr;
 
 #[derive(Deserialize)]
 struct GenerateRequest {
@@ -15,12 +20,20 @@ pub fn router() -> Router<AppState> {
 
 async fn generate_content(
     State(state): State<AppState>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Json(payload): Json<GenerateRequest>,
 ) -> Json<Value> {
     let api_key = env::var("GEMINI_API_KEY").unwrap_or_default();
 
     if api_key.is_empty() {
         return Json(json!({"error": "Server configuration error: Missing Google API Key"}));
+    }
+
+    // 0. Check User Rate Limit (IP based spam protection)
+    if let Err(_) = state.user_limiter.check_key(&addr.ip()) {
+        return Json(json!({
+            "error": "Too many requests. Please try again later."
+        }));
     }
 
     // 1. Check Rate Limits (RPM: 5, RPD: 20)

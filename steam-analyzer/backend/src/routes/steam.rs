@@ -1,12 +1,14 @@
 use crate::{db::AppState, steam_api};
 use axum::{
-    extract::{Path, State},
+    extract::{ConnectInfo, Path, State}, // Added ConnectInfo
     routing::get,
-    Json, Router,
+    Json,
+    Router,
 };
 use serde_json::{json, Value};
 use sqlx::Row;
 use std::env;
+use std::net::SocketAddr; // Added SocketAddr
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -19,8 +21,16 @@ pub fn router() -> Router<AppState> {
 
 async fn get_player_achievements(
     State(state): State<AppState>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>, // Extract IP
     Path((steam_id, app_id)): Path<(String, String)>,
 ) -> Json<Value> {
+    // Check User Rate Limit
+    if let Err(_) = state.user_limiter.check_key(&addr.ip()) {
+        return Json(json!({
+            "error": "Too many requests. Please try again later."
+        }));
+    }
+
     // Check for cached achievements
     // Ideally we cache these too, but for now let's just fetch to get it working first
     // Then we can add caching logic similar to summary/games
@@ -78,8 +88,16 @@ async fn get_player_achievements(
 
 async fn get_user_steam_data(
     State(state): State<AppState>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>, // Extract IP
     Path(steam_id): Path<String>,
 ) -> Json<Value> {
+    // Check User Rate Limit
+    if let Err(_) = state.user_limiter.check_key(&addr.ip()) {
+        return Json(json!({
+            "error": "Too many requests. Please try again later."
+        }));
+    }
+
     // Check for cached summary
     let cached_summary = sqlx::query(
         "SELECT json_data, created_at FROM snapshots 
