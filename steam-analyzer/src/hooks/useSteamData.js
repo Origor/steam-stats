@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { MOCK_USER, MOCK_GAMES, MOCK_ACHIEVEMENTS } from '../mockData';
 import { getPlayerSummaries, getOwnedGames, getPlayerAchievements, getBackendSteamData } from '../services/steamApi';
 
-export function useSteamData({ steamApiKey, steamId, useProxy }) {
+export function useSteamData({ steamId, useProxy }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [userData, setUserData] = useState(null);
@@ -28,10 +28,11 @@ export function useSteamData({ steamApiKey, steamId, useProxy }) {
     };
 
     const fetchData = async () => {
-        if (!steamApiKey && !steamId) {
-            setError("Please provide both an API Key and Steam ID.");
-            return;
-        }
+        // API Key is now handled by backend
+
+        // Note: Backend handles API key for player/games data, but we might still need key for achievements
+        // if generic 'fetchAchievements' still runs client-side.
+
 
         // Use provided key, or fallback to dev env var if in dev mode
         const effectiveKey = steamApiKey || (import.meta.env.DEV ? import.meta.env.VITE_DEV_STEAM_API_KEY : '');
@@ -79,9 +80,7 @@ export function useSteamData({ steamApiKey, steamId, useProxy }) {
         }
         setLoadingAchId(appid);
         try {
-            const effectiveKey = steamApiKey || (import.meta.env.DEV ? import.meta.env.VITE_DEV_STEAM_API_KEY : '');
-            if (!effectiveKey) throw new Error("No API Key available");
-            const json = await getPlayerAchievements(effectiveKey, steamId, appid, useProxy);
+            const json = await getPlayerAchievements(null, steamId, appid); // API Key not needed for backend call
             const unlocked = json.playerstats?.achievements?.filter(a => a.achieved === 1) || [];
             setAchievements(prev => ({ ...prev, [appid]: unlocked }));
         } catch (err) {

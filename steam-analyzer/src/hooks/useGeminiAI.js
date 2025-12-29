@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { generateAIContent } from '../services/steamApi';
 
-export function useGeminiAI(googleApiKey) {
+export function useGeminiAI() {
+    // googleApiKey is no longer needed in frontend
     const [aiProfile, setAiProfile] = useState('');
     const [aiRecommendation, setAiRecommendation] = useState('');
     const [aiValuation, setAiValuation] = useState('');
@@ -8,16 +10,9 @@ export function useGeminiAI(googleApiKey) {
 
     const callGemini = async (prompt) => {
         try {
-            const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${googleApiKey}`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-                }
-            );
-            if (!response.ok) throw new Error(`Gemini API Error: ${response.status}`);
-            const data = await response.json();
+            const data = await generateAIContent(prompt);
+            // Backend proxies the response from Google, which has structure:
+            // { candidates: [ { content: { parts: [ { text: "..." } ] } } ] }
             return data.candidates?.[0]?.content?.parts?.[0]?.text || "No insights generated.";
         } catch (error) {
             console.error("Gemini Error:", error);

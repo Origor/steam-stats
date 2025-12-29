@@ -12,15 +12,9 @@ import StatsGrid from './components/features/StatsGrid';
 import ChartsSection from './components/features/ChartsSection';
 import LibraryList from './components/features/library/LibraryList';
 
-// --- GEMINI API CONFIGURATION ---
-const googleApiKey = import.meta.env.DEV
-  ? "" // OPTION 1: FOR PREVIEW (Active in Dev)
-  : import.meta.env.VITE_GOOGLE_API_KEY || ""; // OPTION 2: FOR PRODUCTION (Active in Build)
-
 // --- MAIN APP ---
 
 export default function SteamAnalyzer() {
-  const [steamApiKey, setSteamApiKey] = useState('');
   const [steamId, setSteamId] = useState('');
   const [useProxy, setUseProxy] = useState(true);
   const [expandedGame, setExpandedGame] = useState(null);
@@ -37,7 +31,7 @@ export default function SteamAnalyzer() {
     loadDemoData,
     fetchData,
     fetchAchievements
-  } = useSteamData({ steamApiKey, steamId, useProxy });
+  } = useSteamData({ steamId, useProxy });
 
   // 2. Steam Stats Hook
   const {
@@ -62,7 +56,7 @@ export default function SteamAnalyzer() {
     // setAiProfile,
     // setAiRecommendation,
     // setAiValuation
-  } = useGeminiAI(googleApiKey);
+  } = useGeminiAI();
 
   // Clear AI results when new data is fetched
   // We can't easily do this automatically inside the hooks without cross-communication or a context, 
@@ -83,8 +77,6 @@ export default function SteamAnalyzer() {
       <Header userData={userData} isDemo={isDemo} loadDemoData={loadDemoData} />
 
       <SteamDataFetcher
-        steamApiKey={steamApiKey}
-        setSteamApiKey={setSteamApiKey}
         steamId={steamId}
         setSteamId={setSteamId}
         useProxy={useProxy}
