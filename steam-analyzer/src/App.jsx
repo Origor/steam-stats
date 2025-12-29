@@ -42,6 +42,7 @@ import StatCard from './components/cards/StatCard';
 import AICard from './components/cards/AICard';
 import SimpleMarkdown from './components/common/SimpleMarkdown';
 import GameBannerImage from './components/common/GameBannerImage';
+import GameIcon from './components/common/GameIcon';
 
 // --- GEMINI API CONFIGURATION ---
 const googleApiKey = import.meta.env.DEV
@@ -241,8 +242,16 @@ export default function SteamAnalyzer() {
 
                           <div className="relative z-10 h-full flex md:grid md:grid-cols-12 md:gap-4 items-center justify-between px-6">
                             <div className="flex items-center gap-4 flex-1 min-w-0 md:col-span-6">
-                              <div className="w-10 h-10 rounded-lg bg-white/80 backdrop-blur-sm shadow-sm flex items-center justify-center shrink-0 border border-slate-100 group-hover:border-slate-200">
-                                {game.img_icon_url ? <img src={`https://media.steampowered.com/steamcommunity/public/images/apps/${game.appid}/${game.img_icon_url}.jpg`} alt="" className="w-full h-full object-cover rounded-lg" /> : <ImageIcon className="w-5 h-5 text-slate-300" />}
+                              <div className="w-10 h-10 rounded-lg bg-white/80 backdrop-blur-sm shadow-sm flex items-center justify-center shrink-0 border border-slate-100 group-hover:border-slate-200 overflow-hidden">
+                                {game.img_icon_url ? (
+                                  <GameIcon
+                                    appid={game.appid}
+                                    iconUrl={game.img_icon_url}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <ImageIcon className="w-5 h-5 text-slate-300" />
+                                )}
                               </div>
                               <div className="flex flex-col">
                                 <span className="font-bold text-slate-800 text-base md:text-lg truncate drop-shadow-sm group-hover:text-indigo-900 transition-colors">{game.name}</span>

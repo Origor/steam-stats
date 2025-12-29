@@ -1,7 +1,17 @@
 import React, { useState } from 'react';
 
 const GameBannerImage = ({ appid, className }) => {
-    const [imageSrc, setImageSrc] = useState(`https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${appid}/library_hero.jpg`);
+    // Use local backend proxy
+    const [imageSrc, setImageSrc] = useState(`http://localhost:3000/api/images/banner/${appid}`);
+    const [hasError, setHasError] = useState(false);
+
+    if (hasError) {
+        return (
+            <div className={`${className} bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center`}>
+                <span className="text-slate-400 opacity-50 text-xs font-mono">NO IMAGE</span>
+            </div>
+        );
+    }
 
     return (
         <img
@@ -9,9 +19,8 @@ const GameBannerImage = ({ appid, className }) => {
             alt=""
             className={className}
             onError={() => {
-                if (imageSrc.includes('library_hero.jpg')) {
-                    setImageSrc(`https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${appid}/header.jpg`);
-                }
+                // If even the proxy fails (e.g. backend down), show error state
+                setHasError(true);
             }}
         />
     );
