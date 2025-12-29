@@ -23,6 +23,37 @@ async fn generate_content(
         return Json(json!({"error": "Server configuration error: Missing Google API Key"}));
     }
 
+    // 1. Check Rate Limits (RPM: 5, RPD: 20)
+    let pool = &state.db;
+
+    // Check records in the last minute (RPM)
+    let rpm_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM gemini_usage_logs WHERE timestamp > datetime('now', '-1 minute')",
+    )
+    .fetch_one(pool)
+    .await
+    .unwrap_or(0);
+
+    if rpm_count >= 5 {
+        return Json(json!({
+            "error": "Rate limit exceeded (5 requests/minute). Please try again in a moment."
+        }));
+    }
+
+    // Check records in the last 24 hours (RPD)
+    let rpd_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM gemini_usage_logs WHERE timestamp > datetime('now', '-1 day')",
+    )
+    .fetch_one(pool)
+    .await
+    .unwrap_or(0);
+
+    if rpd_count >= 20 {
+        return Json(json!({
+            "error": "Daily rate limit exceeded (20 requests/day). Resets rolling 24h."
+        }));
+    }
+
     let url = format!(
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key={}",
         api_key
@@ -40,6 +71,13 @@ async fn generate_content(
     match res {
         Ok(response) => {
             if response.status().is_success() {
+                // Log usage on success
+                // We're just firing and forgetting the log insertion for simplicity, or we wait for it.
+                // Better to await to ensure consistency for strict rate limits.
+                let _ = sqlx::query("INSERT INTO gemini_usage_logs (tokens_estimated) VALUES (0)")
+                    .execute(pool)
+                    .await;
+
                 match response.json::<Value>().await {
                     Ok(data) => {
                         // Extract text to match frontend expectation or return full object
