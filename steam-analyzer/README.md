@@ -74,15 +74,11 @@
 
 ### Configuration
 
-Create a `.env` file in the **root** directory (for Frontend):
-```env
-VITE_GOOGLE_API_KEY=your_gemini_api_key_here
-```
-
 Create a `.env` file in the **backend** directory:
 ```env
 DATABASE_URL=sqlite:steam.db
 STEAM_API_KEY=your_steam_api_key_here
+GEMINI_API_KEY=your_steam_api_key_here
 HOST=127.0.0.1
 PORT=3000
 ```

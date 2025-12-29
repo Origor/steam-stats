@@ -17,7 +17,7 @@ async fn generate_content(
     State(state): State<AppState>,
     Json(payload): Json<GenerateRequest>,
 ) -> Json<Value> {
-    let api_key = env::var("GOOGLE_API_KEY").unwrap_or_default();
+    let api_key = env::var("GEMINI_API_KEY").unwrap_or_default();
 
     if api_key.is_empty() {
         return Json(json!({"error": "Server configuration error: Missing Google API Key"}));
