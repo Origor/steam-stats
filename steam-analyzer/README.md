@@ -76,12 +76,16 @@
 
 Create a `.env` file in the **backend** directory:
 ```env
-DATABASE_URL=sqlite:steam.db
+DATABASE_URL=sqlite:steam_stats.db
 STEAM_API_KEY=your_steam_api_key_here
-GEMINI_API_KEY=your_steam_api_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
 HOST=127.0.0.1
 PORT=3000
 ```
+
+## 🚢 Deployment
+
+For detailed deployment instructions, including how to set up Nginx and Systemd services, please refer to [DEPLOYING.md](DEPLOYING.md).
 
 ## 🏃‍♂️ Usage
 

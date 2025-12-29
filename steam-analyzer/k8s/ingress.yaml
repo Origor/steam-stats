@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: steam-ingress
+  annotations:
+    # Adjust based on your ingress controller, e.g., nginx
+    kubernetes.io/ingress.class: nginx
+    # Rewrite path for API if needed, though our backend serves at /api naturally if configured
+    # But currently backend router serves at /api (router.nest("/api", ...))
+    # So we don't need rewrite if we match /api
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /api/.*
+            pathType: Prefix
+            backend:
+              service:
+                name: steam-backend
+                port:
+                  number: 3000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: steam-frontend
+                port:
+                  number: 80

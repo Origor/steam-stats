@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This guide explains how to deploy the **Steam Analyzer** application (React + Chromium/Rust) to a production Linux server (e.g., Ubuntu/Debian).
+This guide explains how to deploy the **Steam Analyzer** application (React + Rust) to a production Linux server (e.g., Ubuntu/Debian).
 
 ## Prerequisites
 
@@ -29,7 +29,7 @@ cd steam-analyzer
    ```bash
    sudo nano /etc/systemd/system/steam-backend.service
    ```
-   *Make sure to update `User`, `WorkingDirectory`, `ExecStart`, and environment variables like `STEAM_API_KEY` (if not using .env).*
+   *Update `User`, `WorkingDirectory`, and `ExecStart`. It is highly recommended to use an `.env` file and the `EnvironmentFile` directive instead of hardcoding secrets in the service file.*
 
 3. **Enable and Start the Service**:
    ```bash

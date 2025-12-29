@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: steam-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: steam-frontend
+  template:
+    metadata:
+      labels:
+        app: steam-frontend
+    spec:
+      containers:
+        - name: steam-frontend
+          image: steam-frontend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: steam-frontend
+spec:
+  selector:
+    app: steam-frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80

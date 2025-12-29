@@ -1,4 +1,4 @@
-const BACKEND_URL = 'http://localhost:3000/api';
+const BACKEND_URL = '/api';
 
 // Helper to fetch from backend
 const fetchBackend = async (endpoint, options = {}) => {

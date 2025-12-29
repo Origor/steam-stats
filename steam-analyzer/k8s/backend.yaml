@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: steam-db-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: steam-backend
+spec:
+  replicas: 1 # SQLite requires a single writer
+  selector:
+    matchLabels:
+      app: steam-backend
+  template:
+    metadata:
+      labels:
+        app: steam-backend
+    spec:
+      containers:
+        - name: steam-backend
+          image: steam-backend:latest
+          imagePullPolicy: IfNotPresent # Use local image if available
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DATABASE_URL
+              value: "sqlite:///data/steam_stats.db"
+            - name: STEAM_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: steam-secrets
+                  key: steam-api-key
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: steam-secrets
+                  key: gemini-api-key
+          volumeMounts:
+            - name: db-volume
+              mountPath: /data
+      volumes:
+        - name: db-volume
+          persistentVolumeClaim:
+            claimName: steam-db-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: steam-backend
+spec:
+  selector:
+    app: steam-backend
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
